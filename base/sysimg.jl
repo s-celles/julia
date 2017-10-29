@@ -424,9 +424,6 @@ using .SparseArrays
 
 include("asyncmap.jl")
 
-include("distributed/Distributed.jl")
-using .Distributed
-
 # worker threads
 include("threadcall.jl")
 
@@ -469,7 +466,6 @@ function __init__()
     Multimedia.reinit_displays() # since Multimedia.displays uses STDOUT as fallback
     early_init()
     init_load_path()
-    Distributed.init_parallel()
     init_threadcall()
 end
 
@@ -496,6 +492,7 @@ Base.require(:Profile)
 Base.require(:SharedArrays)
 Base.require(:SuiteSparse)
 Base.require(:Test)
+Base.require(:Distributed)
 
 empty!(LOAD_PATH)
 

@@ -31,6 +31,7 @@ if Sys.iswindows()
     cp_q("../stdlib/CRC32c/docs/src/index.md",                "src/stdlib/crc32c.md")
     cp_q("../stdlib/Dates/docs/src/index.md",                 "src/stdlib/dates.md")
     cp_q("../stdlib/IterativeEigenSolvers/docs/src/index.md", "src/stdlib/iterativeeigensolvers.md")
+    cp_q("../stdlib/Distributed/docs/src/index.md",           "src/stdlib/distributed.md")
 else
     symlink_q("../../../stdlib/DelimitedFiles/docs/src/index.md",        "src/stdlib/delimitedfiles.md")
     symlink_q("../../../stdlib/Test/docs/src/index.md",                  "src/stdlib/test.md")
@@ -42,6 +43,7 @@ else
     symlink_q("../../../stdlib/CRC32c/docs/src/index.md",                "src/stdlib/crc32c.md")
     symlink_q("../../../stdlib/Dates/docs/src/index.md",                 "src/stdlib/dates.md")
     symlink_q("../../../stdlib/IterativeEigenSolvers/docs/src/index.md", "src/stdlib/iterativeeigensolvers.md")
+    symlink_q("../../../stdlib/Distributed/docs/src/index.md",           "src/stdlib/distributed.md")
 end
 
 const PAGES = [
@@ -94,6 +96,8 @@ const PAGES = [
         "stdlib/strings.md",
         "stdlib/arrays.md",
         "stdlib/parallel.md",
+        "stdlib/distributed.md",
+        "stdlib/multi-threading.md",
         "stdlib/linalg.md",
         "stdlib/constants.md",
         "stdlib/file.md",
@@ -152,12 +156,12 @@ const PAGES = [
 ]
 
 using DelimitedFiles, Test, Mmap, SharedArrays, Profile, Base64, FileWatching, CRC32c,
-      Dates, IterativeEigenSolvers
+      Dates, IterativeEigenSolvers, Distributed
 
 makedocs(
     build     = joinpath(pwd(), "_build/html/en"),
     modules   = [Base, Core, BuildSysImg, DelimitedFiles, Test, Mmap, SharedArrays, Profile,
-                 Base64, FileWatching, Dates, IterativeEigenSolvers],
+                 Base64, FileWatching, Dates, IterativeEigenSolvers, Distributed],
     clean     = false,
     doctest   = "doctest" in ARGS,
     linkcheck = "linkcheck" in ARGS,
