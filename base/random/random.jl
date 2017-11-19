@@ -4,6 +4,8 @@ module Random
 
 using Base.dSFMT
 using Base.GMP: Limb, MPZ
+using Base: @gc_preserve
+
 import Base: copymutable, copy, copy!, ==, hash
 
 export srand,
