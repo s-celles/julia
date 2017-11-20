@@ -226,18 +226,18 @@ for T in (String, GenericString)
             for c in ('X', 'δ', '\U0001d6a5')
                 s = convert(T, string(prefix, c, suffix))
                 r = reverse(s)
-                ri = search(r, c)
+                ri = findfirst(equalto(c), r)
                 @test r == RevString(s)
                 @test c == s[reverseind(s, ri)] == r[ri]
                 s = RevString(s)
                 r = reverse(s)
-                ri = search(r, c)
+                ri = findfirst(equalto(c), r)
                 @test c == s[reverseind(s, ri)] == r[ri]
                 s = convert(T, string(prefix, prefix, c, suffix, suffix))
                 pre = convert(T, prefix)
                 sb = SubString(s, nextind(pre, endof(pre)), endof(convert(T, string(prefix, prefix, c, suffix))))
                 r = reverse(sb)
-                ri = search(r, c)
+                ri = findfirst(equalto(c), r)
                 @test c == sb[reverseind(sb, ri)] == r[ri]
             end
         end

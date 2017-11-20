@@ -3,57 +3,49 @@
 const Chars = Union{Char,Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}
 
 """
-    search(string::AbstractString, chars::Chars, [start::Integer])
+    findfirst(pattern::AbstractString, string::AbstractString)
+    findfirst(pattern::Regex, string::String)
 
-Search for the first occurrence of the given characters within the given string. The second
-argument may be a single character, a vector or a set of characters, a string, or a regular
-expression (though regular expressions are only allowed on contiguous strings, such as ASCII
-or UTF-8 strings). The third argument optionally specifies a starting index. The return
-value is a range of indexes where the matching sequence is found, such that `s[search(s,x)] == x`:
-
-`search(string, "substring")` = `start:end` such that `string[start:end] == "substring"`, or
-`0:-1` if unmatched.
-
-`search(string, 'c')` = `index` such that `string[index] == 'c'`, or `0` if unmatched.
+Find the first occurrence of `pattern` in `string`. Equivalent to
+[`findnext(pattern, string, start(s))`](@ref).
 
 # Examples
 ```jldoctest
-julia> search("Hello to the world", "z")
+julia> findfirst("z", "Hello to the world")
 0:-1
 
-julia> search("JuliaLang","Julia")
+julia> findfirst("Julia", "JuliaLang")
 1:5
 ```
 """
-function search(s::AbstractString, c::Chars, i::Integer)
-    if isempty(c)
-        return 1 <= i <= nextind(s,endof(s)) ? i :
-               throw(BoundsError(s, i))
-    end
-    if i < 1 || i > nextind(s,endof(s))
-        throw(BoundsError(s, i))
-    end
-    while !done(s,i)
+findfirst(pattern::AbstractString, string::AbstractString) =
+    findnext(pattern, string, start(string))
+
+# AbstractString implementation of the generic findnext interface
+function findnext(testf::Function, s::AbstractString, i::Integer=start(s))
+    @boundscheck (i < 1 || i > nextind(s,endof(s))) && throw(BoundsError(s, i))
+    @inbounds while !done(s,i)
         d, j = next(s,i)
-        if d in c
+        if testf(d)
             return i
         end
         i = j
     end
     return 0
 end
-search(s::AbstractString, c::Chars) = search(s,c,start(s))
 
-in(c::Char, s::AbstractString) = (search(s,c)!=0)
+in(c::Char, s::AbstractString) = (findfirst(equalto(c),s)!=0)
 
-function _searchindex(s, t, i)
+function _searchindex(s::Union{AbstractString,ByteArray},
+                      t::Union{AbstractString,Char,Int8,UInt8},
+                      i::Integer)
     if isempty(t)
         return 1 <= i <= nextind(s,endof(s)) ? i :
                throw(BoundsError(s, i))
     end
     t1, j2 = next(t,start(t))
     while true
-        i = search(s,t1,i)
+        i = _searchindex(s,t1,i)
         if i == 0 return 0 end
         c, ii = next(s,i)
         j = j2; k = ii
@@ -77,7 +69,7 @@ function _searchindex(s, t, i)
     end
 end
 
-_searchindex(s, t::Char, i) = search(s, t, i)
+_searchindex(s::AbstractString, t::Char, i::Integer) = findnext(equalto(t), s, i)
 
 function _search_bloom_mask(c)
     UInt64(1) << (c & 63)
@@ -86,7 +78,10 @@ end
 _nthbyte(s::String, i) = codeunit(s, i)
 _nthbyte(a::ByteArray, i) = a[i]
 
-function _searchindex(s::Union{String,ByteArray}, t::Union{String,ByteArray}, i)
+_searchindex(s::String, t::String, i::Integer) =
+    _searchindex(Vector{UInt8}(s), Vector{UInt8}(t), i)
+
+function _searchindex(s::ByteArray, t::ByteArray, i::Integer)
     n = sizeof(t)
     m = sizeof(s)
 
@@ -95,7 +90,7 @@ function _searchindex(s::Union{String,ByteArray}, t::Union{String,ByteArray}, i)
     elseif m == 0
         return 0
     elseif n == 1
-        return search(s, _nthbyte(t,1), i)
+        return findnext(equalto(_nthbyte(t,1)), s, i)
     end
 
     w = m - n
@@ -147,12 +142,12 @@ function _searchindex(s::Union{String,ByteArray}, t::Union{String,ByteArray}, i)
     0
 end
 
-searchindex(s::ByteArray, t::ByteArray, i) = _searchindex(s,t,i)
+searchindex(s::ByteArray, t::ByteArray, i::Integer) = _searchindex(s,t,i)
 
 """
     searchindex(s::AbstractString, substring, [start::Integer])
 
-Similar to [`search`](@ref), but return only the start index at which
+Similar to `search`, but return only the start index at which
 the substring is found, or `0` if it is not.
 
 # Examples
@@ -176,7 +171,7 @@ function searchindex(s::String, t::String, i::Integer=1)
     # Check for fast case of a single byte
     # (for multi-byte UTF-8 sequences, use searchindex on byte arrays instead)
     if endof(t) == 1
-        search(s, t[1], i)
+        findnext(equalto(t[1]), s, i)
     else
         _searchindex(s, t, i)
     end
@@ -191,11 +186,38 @@ function _search(s, t, i::Integer)
     end
 end
 
-search(s::AbstractString, t::AbstractString, i::Integer=start(s)) = _search(s, t, i)
-search(s::ByteArray, t::ByteArray, i::Integer=start(s)) = _search(s, t, i)
+"""
+    findnext(pattern::AbstractString, string::AbstractString, [start::Integer])
+    findnext(pattern::Regex, string::String, [start::Integer])
+
+Find the first occurrence of `pattern` in `string`. `pattern` can be either a
+string, or a regular expression, in which case `string` must be of type `String`.
+`start` optionally specifies a starting index.
+
+The return value is a range of indexes where the matching sequence is found, such that
+`s[findnext(x, s, i)] == x`:
+
+`findnext("substring", string, i)` = `start:end` such that
+`string[start:end] == "substring"`, or `0:-1` if unmatched.
+
+# Examples
+```jldoctest
+julia> findnext("z", "Hello to the world", 1)
+0:-1
+
+julia> findnext("o", "Hello to the world", 6)
+8:8
+
+julia> findnext("Julia", "JuliaLang", 2)
+1:5
+```
+"""
+findnext(t::AbstractString, s::AbstractString, i::Integer=start(s)) = _search(s, t, i)
+findnext(t::ByteArray, s::ByteArray, i::Integer=start(s)) = _search(s, t, i)
 
 function rsearch(s::AbstractString, c::Chars)
-    j = search(RevString(s), c)
+    f = c isa Char ? f = equalto(c) : x -> x in c
+    j = findfirst(f, RevString(s))
     j == 0 && return 0
     endof(s)-j+1
 end
@@ -203,7 +225,7 @@ end
 """
     rsearch(s::AbstractString, chars::Chars, [start::Integer])
 
-Similar to [`search`](@ref), but returning the last occurrence of the given characters within the
+Similar to `search` but returning the last occurrence of the given characters within the
 given string, searching in reverse from `start`.
 
 # Examples
@@ -213,8 +235,9 @@ julia> rsearch("aaabbb","b")
 ```
 """
 function rsearch(s::AbstractString, c::Chars, i::Integer)
+    f = c isa Char ? f = equalto(c) : x -> x in c
     e = endof(s)
-    j = search(RevString(s), c, e-i+1)
+    j = findnext(f, RevString(s), e-i+1)
     j == 0 && return 0
     e-j+1
 end

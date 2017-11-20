@@ -596,7 +596,7 @@ function edit_move_down(buf::IOBuffer)
     npos = rsearch(buf.data[1:buf.size], '\n', position(buf))
     # We're interested in character count, not byte count
     offset = length(String(buf.data[(npos+1):(position(buf))]))
-    npos2 = search(buf.data[1:buf.size], '\n', position(buf)+1)
+    npos2 = findnext(equalto(UInt8('\n')), buf.data[1:buf.size], position(buf)+1)
     if npos2 == 0 #we're in the last line
         return false
     end
@@ -1803,7 +1803,7 @@ end
 
 function move_line_end(buf::IOBuffer)
     eof(buf) && return
-    pos = search(buf.data, '\n', position(buf)+1)
+    pos = findnext(equalto(UInt8('\n')), buf.data, position(buf)+1)
     if pos == 0
         move_input_end(buf)
         return

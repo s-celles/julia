@@ -893,7 +893,7 @@ function Base.split(ce::ConfigEntry)
     key = unsafe_string(ce.name)
 
     # Determine the positions of the delimiters
-    subsection_delim = search(key, '.')
+    subsection_delim = findfirst(equalto('.'), key)
     name_delim = rsearch(key, '.')
 
     section = SubString(key, 1, subsection_delim - 1)

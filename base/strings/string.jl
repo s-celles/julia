@@ -317,7 +317,7 @@ function getindex(s::String, r::UnitRange{Int})
     unsafe_string(pointer(s,i), j-i)
 end
 
-function search(s::String, c::Char, i::Integer = 1)
+function findfirst(pred::EqualTo{Char}, s::String, i::Integer = 1)
     if i < 1 || i > sizeof(s)
         i == sizeof(s) + 1 && return 0
         throw(BoundsError(s, i))
@@ -325,15 +325,17 @@ function search(s::String, c::Char, i::Integer = 1)
     @inbounds if is_valid_continuation(codeunit(s,i))
         throw(UnicodeError(UTF_ERR_INVALID_INDEX, i, codeunit(s,i)))
     end
-    c < Char(0x80) && return search(s, c%UInt8, i)
+    c = pred.x
+    c < Char(0x80) && return _search(s, c%UInt8, i)
     while true
-        i = search(s, first_utf8_byte(c), i)
+        i = _search(s, first_utf8_byte(c), i)
         (i==0 || s[i] == c) && return i
         i = next(s,i)[2]
     end
 end
 
-function search(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = 1)
+# TODO: try renaming this method and the next one to _find_char
+function _search(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = 1)
     if i < 1
         throw(BoundsError(a, i))
     end
@@ -346,11 +348,11 @@ function search(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = 1
     q == C_NULL ? 0 : Int(q-p+1)
 end
 
-function search(a::ByteArray, b::Char, i::Integer = 1)
+function _search(a::ByteArray, b::Char, i::Integer = 1)
     if isascii(b)
-        search(a,UInt8(b),i)
+        _search(a,UInt8(b),i)
     else
-        search(a,Vector{UInt8}(string(b)),i).start
+        _search(a,Vector{UInt8}(string(b)),i).start
     end
 end
 

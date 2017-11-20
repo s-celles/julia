@@ -405,7 +405,7 @@ function afterusing(string::String, startpos::Int)
     str = string[1:prevind(string,startpos)]
     isempty(str) && return false
     rstr = reverse(str)
-    r = search(rstr, r"\s(gnisu|tropmi)\b")
+    r = findfirst(r"\s(gnisu|tropmi)\b", rstr)
     isempty(r) && return false
     fr = reverseind(str, last(r))
     return ismatch(r"^\b(using|import)\s*((\w+[.])*\w+\s*,\s*)*$", str[fr:end])
@@ -458,7 +458,7 @@ function dict_identifier_key(str,tag)
         # Avoid `isdefined(::Array, ::Symbol)`
         isa(obj, Array) && return (nothing, nothing, nothing)
     end
-    begin_of_key = first(search(str, r"\S", nextind(str, end_of_identifier) + 1)) # 1 for [
+    begin_of_key = first(findnext(r"\S", str, nextind(str, end_of_identifier) + 1)) # 1 for [
     begin_of_key==0 && return (true, nothing, nothing)
     partial_key = str[begin_of_key:end]
     (isa(obj, Associative) && length(obj) < 1e6) || return (true, nothing, nothing)

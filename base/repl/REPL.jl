@@ -586,7 +586,7 @@ function history_search(hist::REPLHistoryProvider, query_buffer::IOBuffer, respo
     !skip_current && searchdata == response_str[a:b] && return true
 
     searchfunc, searchstart, skipfunc = backwards ? (rsearch, b, prevind) :
-                                                    (search,  a, nextind)
+                                                    (findfirst,  a, nextind)
     skip_current && (searchstart = skipfunc(response_str, searchstart))
 
     # Start searching
@@ -603,7 +603,7 @@ function history_search(hist::REPLHistoryProvider, query_buffer::IOBuffer, respo
     idxs = backwards ? ((hist.cur_idx-1):-1:1) : ((hist.cur_idx+1):length(hist.history))
     for idx in idxs
         h = hist.history[idx]
-        match = searchfunc(h, searchdata)
+        match = searchfunc === findfirst ? findfirst(searchdata, h) : rsearch(h, searchdata)
         if match != 0:-1 && h != response_str && haskey(hist.mode_mapping, hist.modes[idx])
             truncate(response_buffer, 0)
             write(response_buffer, h)
@@ -857,7 +857,7 @@ function setup_interface(
             sbuffer = LineEdit.buffer(s)
             curspos = position(sbuffer)
             seek(sbuffer, 0)
-            shouldeval = (nb_available(sbuffer) == curspos && search(sbuffer, UInt8('\n')) == 0)
+            shouldeval = (nb_available(sbuffer) == curspos && findfirst(equalto(UInt8('\n')), sbuffer) == 0)
             seek(sbuffer, curspos)
             if curspos == 0
                 # if pasting at the beginning, strip leading whitespace

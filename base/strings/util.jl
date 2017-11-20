@@ -275,17 +275,23 @@ julia> rpad("March",20)
 rpad(s, n::Integer, p=" ") = rpad(string(s),n,string(p))
 
 # splitter can be a Char, Vector{Char}, AbstractString, Regex, ...
-# any splitter that provides search(s::AbstractString, splitter)
 split(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:SubString} =
     _split(str, splitter, limit, keep, T[])
+split(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
+      limit::Integer=0, keep::Bool=true) where {T<:SubString} =
+    _split(str, x -> x in splitter, limit, keep, T[])
+split(str::T, splitter::Char; limit::Integer=0, keep::Bool=true) where {T<:SubString} =
+    _split(str, equalto(splitter), limit, keep, T[])
 
 """
     split(s::AbstractString, [chars]; limit::Integer=0, keep::Bool=true)
 
 Return an array of substrings by splitting the given string on occurrences of the given
-character delimiters, which may be specified in any of the formats allowed by `search`'s
-second argument (i.e. a single character, collection of characters, string, or regular
-expression). If `chars` is omitted, it defaults to the set of all space characters, and
+character delimiters, which may be specified in any of the formats allowed by
+[`findnext`](@ref)'s first argument (i.e. as a string, regular expression or a function),
+or as a single character or collection of characters.
+
+If `chars` is omitted, it defaults to the set of all space characters, and
 `keep` is taken to be `false`. The two keyword arguments are optional: they are a
 maximum size for the result and a flag determining whether empty fields should be kept in
 the result.
@@ -301,12 +307,21 @@ julia> split(a,".")
  "rch"
 ```
 """
-split(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+split
+
+split(str::T, splitter;
+      limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
     _split(str, splitter, limit, keep, SubString{T}[])
+split(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
+      limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+    _split(str, x -> x in splitter, limit, keep, SubString{T}[])
+split(str::T, splitter::Char;
+      limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+    _split(str, equalto(splitter), limit, keep, SubString{T}[])
 function _split(str::AbstractString, splitter, limit::Integer, keep_empty::Bool, strs::Array)
     i = start(str)
     n = endof(str)
-    r = search(str,splitter,i)
+    r = findnext(splitter,str,i)
     j, k = first(r), nextind(str,last(r))
     while 0 < j <= n && length(strs) != limit-1
         if i < k
@@ -316,7 +331,7 @@ function _split(str::AbstractString, splitter, limit::Integer, keep_empty::Bool,
             i = k
         end
         (k <= j) && (k = nextind(str,j))
-        r = search(str,splitter,k)
+        r = findnext(splitter,str,k)
         j, k = first(r), nextind(str,last(r))
     end
     if keep_empty || !done(str,i)
@@ -387,13 +402,18 @@ _replace(io, repl::Function, str, r, pattern) =
     print(io, repl(SubString(str, first(r), last(r))))
 
 # TODO: rename to `replace` when `replace` is removed from deprecated.jl
+replace_new(str::String, pattern::Char, repl, count::Integer) =
+    replace_new(str, equalto(pattern), repl, count)
+replace_new(str::String, pattern::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}},
+            repl, count::Integer) =
+    replace_new(str, x -> x in pattern, repl, count)
 function replace_new(str::String, pattern, repl, count::Integer)
     count == 0 && return str
     count < 0 && throw(DomainError(count, "`count` must be non-negative."))
     n = 1
     e = endof(str)
     i = a = start(str)
-    r = search(str,pattern,i)
+    r = findnext(pattern,str,i)
     j, k = first(r), last(r)
     out = IOBuffer(StringVector(floor(Int, 1.2sizeof(str))), true, true)
     out.size = 0
@@ -412,7 +432,7 @@ function replace_new(str::String, pattern, repl, count::Integer)
         if j > e
             break
         end
-        r = search(str,pattern,k)
+        r = findnext(pattern,str,k)
         j, k = first(r), last(r)
         n == count && break
         n += 1
@@ -426,8 +446,9 @@ end
 
 Search for the given pattern `pat` in `s`, and replace each occurrence with `r`.
 If `count` is provided, replace at most `count` occurrences.
-As with [`search`](@ref), the second argument may be a
-single character, a vector or a set of characters, a string, or a regular expression. If `r`
+The pattern may be specified in any of the formats allowed by
+[`findnext`](@ref)'s first argument (i.e. as a string, regular expression or a function),
+or as a single character or collection of characters. If `r`
 is a function, each occurrence is replaced with `r(s)` where `s` is the matched substring.
 If `pat` is a regular expression and `r` is a `SubstitutionString`, then capture group
 references in `r` are replaced with the corresponding matched text.

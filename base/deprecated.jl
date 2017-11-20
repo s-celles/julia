@@ -2172,6 +2172,25 @@ end
 
 @deprecate merge!(repo::LibGit2.GitRepo, args...; kwargs...) LibGit2.merge!(repo, args...; kwargs...)
 
+@deprecate search(str::Union{String,SubString}, re::Regex, idx::Integer) findnext(re, str, idx)
+@deprecate search(str::Union{String,SubString}, re::Regex) findfirst(re, str)
+@deprecate search(s::AbstractString, r::Regex, idx::Integer) findnext(r, s, idx)
+@deprecate search(s::AbstractString, r::Regex) findfirst(r, s)
+@deprecate search(s::String, c::Char, i::Integer) findnext(equalto(c), s, i)
+@deprecate search(s::String, c::Char) findfirst(equalto(c), s)
+# FIXME: no replacement to search for a multibyte char in a ByteArray
+@deprecate search(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = 1) findnext(equalto(b), a, i)
+@deprecate search(a::String, b::Union{Int8,UInt8}, i::Integer = 1) findnext(equalto(Char(b)), a, i)
+@deprecate search(a::ByteArray, b::Char, i::Integer = 1) findnext(equalto(Unt8(b)), a, i)
+
+@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findnext(x -> x in c, s, i)
+@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findfirst(x -> x in c, s, i)
+@deprecate search(s::AbstractString, t::AbstractString, i::Integer) findnext(t, s, i)
+@deprecate search(s::AbstractString, t::AbstractString) findfirst(t, s)
+
+@deprecate search(buf::IOBuffer, delim::UInt8) findfirst(equalto(delim), buf)
+@deprecate search(buf::Base.GenericIOBuffer, delim::UInt8) findfirst(equalto(delim), buf)
+
 # END 0.7 deprecations
 
 # BEGIN 1.0 deprecations

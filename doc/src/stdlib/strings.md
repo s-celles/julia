@@ -34,7 +34,8 @@ Base.:(==)(::AbstractString, ::AbstractString)
 Base.cmp(::AbstractString, ::AbstractString)
 Base.lpad
 Base.rpad
-Base.search
+Base.findfirst(::AbstractString, ::AbstractString)
+Base.findnext(::AbstractString, ::AbstractString, ::Integer)
 Base.rsearch
 Base.searchindex
 Base.rsearchindex

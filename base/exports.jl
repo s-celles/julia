@@ -774,7 +774,6 @@ export
     rsearchindex,
     rsplit,
     rstrip,
-    search,
     searchindex,
     show,
     showcompact,
