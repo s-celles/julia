@@ -22,7 +22,7 @@ findfirst(pattern::AbstractString, string::AbstractString) =
     findnext(pattern, string, start(string))
 
 # AbstractString implementation of the generic findnext interface
-function findnext(testf::Function, s::AbstractString, i::Integer=start(s))
+function findnext(testf::Function, s::AbstractString, i::Integer)
     @boundscheck (i < 1 || i > nextind(s,endof(s))) && throw(BoundsError(s, i))
     @inbounds while !done(s,i)
         d, j = next(s,i)
@@ -45,7 +45,7 @@ function _searchindex(s::Union{AbstractString,ByteArray},
     end
     t1, j2 = next(t,start(t))
     while true
-        i = _searchindex(s,t1,i)
+        i = findnext(equalto(t1),s,i)
         if i == 0 return 0 end
         c, ii = next(s,i)
         j = j2; k = ii
@@ -187,12 +187,12 @@ function _search(s, t, i::Integer)
 end
 
 """
-    findnext(pattern::AbstractString, string::AbstractString, [start::Integer])
-    findnext(pattern::Regex, string::String, [start::Integer])
+    findnext(pattern::AbstractString, string::AbstractString, start::Integer)
+    findnext(pattern::Regex, string::String, start::Integer)
 
-Find the first occurrence of `pattern` in `string`. `pattern` can be either a
-string, or a regular expression, in which case `string` must be of type `String`.
-`start` optionally specifies a starting index.
+Find the next occurrence of `pattern` in `string` starting at position `start`.
+`pattern` can be either a string, or a regular expression, in which case `string`
+must be of type `String`.
 
 The return value is a range of indexes where the matching sequence is found, such that
 `s[findnext(x, s, i)] == x`:
@@ -212,47 +212,50 @@ julia> findnext("Julia", "JuliaLang", 2)
 1:5
 ```
 """
-findnext(t::AbstractString, s::AbstractString, i::Integer=start(s)) = _search(s, t, i)
-findnext(t::ByteArray, s::ByteArray, i::Integer=start(s)) = _search(s, t, i)
-
-function rsearch(s::AbstractString, c::Chars)
-    f = c isa Char ? f = equalto(c) : x -> x in c
-    j = findfirst(f, RevString(s))
-    j == 0 && return 0
-    endof(s)-j+1
-end
+findnext(t::AbstractString, s::AbstractString, i::Integer) = _search(s, t, i)
+# TODO: remove?
+findnext(t::ByteArray, s::ByteArray, i::Integer) = _search(s, t, i)
 
 """
-    rsearch(s::AbstractString, chars::Chars, [start::Integer])
+    findlast(pattern::AbstractString, string::AbstractString)
+    findlast(pattern::Regex, string::String)
 
-Similar to `search` but returning the last occurrence of the given characters within the
-given string, searching in reverse from `start`.
+Find the last occurrence of `pattern` in `string`. Equivalent to
+[`findlast(pattern, string, endof(s))`](@ref).
 
 # Examples
 ```jldoctest
-julia> rsearch("aaabbb","b")
-6:6
+julia> findlast("o", "Hello to the world")
+15:15
+
+julia> findfirst("Julia", "JuliaLang")
+1:5
 ```
 """
-function rsearch(s::AbstractString, c::Chars, i::Integer)
-    f = c isa Char ? f = equalto(c) : x -> x in c
+findlast(pattern::AbstractString, string::AbstractString) =
+    findprev(pattern, string, endof(string))
+
+# AbstractString implementation of the generic findprev interface
+function findprev(testf::Function, s::AbstractString, i::Integer)
     e = endof(s)
-    j = findnext(f, RevString(s), e-i+1)
+    j = findnext(testf, RevString(s), e-i+1)
     j == 0 && return 0
     e-j+1
 end
 
-function _rsearchindex(s, t, i)
+function _rsearchindex(s::AbstractString,
+                       t::Union{AbstractString,Char,Int8,UInt8},
+                       i::Integer)
     if isempty(t)
         return 1 <= i <= nextind(s,endof(s)) ? i :
                throw(BoundsError(s, i))
     end
-    t = RevString(t)
+    t = t isa AbstractString ? RevString(t) : t
     rs = RevString(s)
     l = endof(s)
     t1, j2 = next(t,start(t))
     while true
-        i = rsearch(s,t1,i)
+        i = findprev(equalto(t1),s,i)
         if i == 0 return 0 end
         c, ii = next(rs,l-i+1)
         j = j2; k = ii
@@ -276,7 +279,10 @@ function _rsearchindex(s, t, i)
     end
 end
 
-function _rsearchindex(s::Union{String,ByteArray}, t::Union{String,ByteArray}, k)
+_rsearchindex(s::String, t::String, i::Integer) =
+    _rsearchindex(Vector{UInt8}(s), Vector{UInt8}(t), i)
+
+function _rsearchindex(s::ByteArray, t::ByteArray, k::Integer)
     n = sizeof(t)
     m = sizeof(s)
 
@@ -285,7 +291,7 @@ function _rsearchindex(s::Union{String,ByteArray}, t::Union{String,ByteArray}, k
     elseif m == 0
         return 0
     elseif n == 1
-        return rsearch(s, _nthbyte(t,1), k)
+        return findprev(equalto(_nthbyte(t,1)), s, k)
     end
 
     w = m - n
@@ -342,7 +348,7 @@ rsearchindex(s::ByteArray, t::ByteArray, i::Integer) = _rsearchindex(s,t,i)
 """
     rsearchindex(s::AbstractString, substring, [start::Integer])
 
-Similar to [`rsearch`](@ref), but return only the start index at which the substring is found, or `0` if it is not.
+Similar to `rsearch`, but return only the start index at which the substring is found, or `0` if it is not.
 
 # Examples
 ```jldoctest
@@ -360,7 +366,7 @@ function rsearchindex(s::String, t::String)
     # Check for fast case of a single byte
     # (for multi-byte UTF-8 sequences, use rsearchindex instead)
     if endof(t) == 1
-        rsearch(s, t[1])
+        findprev(equalto(t[1]), s)
     else
         _rsearchindex(s, t, sizeof(s))
     end
@@ -370,7 +376,7 @@ function rsearchindex(s::String, t::String, i::Integer)
     # Check for fast case of a single byte
     # (for multi-byte UTF-8 sequences, use rsearchindex instead)
     if endof(t) == 1
-        rsearch(s, t[1], i)
+        findprev(equalto(t[1]), s, i)
     elseif endof(t) != 0
         _rsearchindex(s, t, nextind(s, i)-1)
     elseif i > sizeof(s)
@@ -391,8 +397,35 @@ function _rsearch(s, t, i::Integer)
     end
 end
 
-rsearch(s::AbstractString, t::AbstractString, i::Integer=endof(s)) = _rsearch(s, t, i)
-rsearch(s::ByteArray, t::ByteArray, i::Integer=endof(s)) = _rsearch(s, t, i)
+"""
+    findprev(pattern::AbstractString, string::AbstractString, start::Integer)
+    findprev(pattern::Regex, string::String, start::Integer)
+
+Find the previous occurrence of `pattern` in `string` starting at position `start`.
+`pattern` can be either a string, or a regular expression, in which case `string`
+must be of type `String`.
+
+The return value is a range of indexes where the matching sequence is found, such that
+`s[findprev(x, s, i)] == x`:
+
+`findprev("substring", string, i)` = `start:end` such that
+`string[start:end] == "substring"`, or `0:-1` if unmatched.
+
+# Examples
+```jldoctest
+julia> findprev("z", "Hello to the world", 18)
+0:-1
+
+julia> findprev("o", "Hello to the world", 18)
+15:15
+
+julia> findprev("Julia", "JuliaLang", 6)
+1:5
+```
+"""
+findprev(t::AbstractString, s::AbstractString, i::Integer) = _rsearch(s, t, i)
+# TODO: remove?
+findprev(t::ByteArray, s::ByteArray, i::Integer) = _rsearch(s, t, i)
 
 """
     contains(haystack::AbstractString, needle::Union{AbstractString,Char})

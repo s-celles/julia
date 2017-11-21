@@ -770,7 +770,6 @@ export
     repr,
     reverseind,
     rpad,
-    rsearch,
     rsearchindex,
     rsplit,
     rstrip,

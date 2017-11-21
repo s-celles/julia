@@ -317,7 +317,7 @@ function getindex(s::String, r::UnitRange{Int})
     unsafe_string(pointer(s,i), j-i)
 end
 
-function findfirst(pred::EqualTo{Char}, s::String, i::Integer = 1)
+function findnext(pred::EqualTo{Char}, s::String, i::Integer)
     if i < 1 || i > sizeof(s)
         i == sizeof(s) + 1 && return 0
         throw(BoundsError(s, i))
@@ -356,17 +356,18 @@ function _search(a::ByteArray, b::Char, i::Integer = 1)
     end
 end
 
-function rsearch(s::String, c::Char, i::Integer = sizeof(s))
-    c < Char(0x80) && return rsearch(s, c%UInt8, i)
+function findprev(pred::EqualTo{Char}, s::String, i::Integer)
+    c = pred.x
+    c < Char(0x80) && return _rsearch(s, c%UInt8, i)
     b = first_utf8_byte(c)
     while true
-        i = rsearch(s, b, i)
+        i = _rsearch(s, b, i)
         (i==0 || s[i] == c) && return i
         i = prevind(s,i)
     end
 end
 
-function rsearch(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = sizeof(s))
+function _rsearch(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = sizeof(s))
     if i < 1
         return i == 0 ? 0 : throw(BoundsError(a, i))
     end
@@ -379,11 +380,11 @@ function rsearch(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = 
     q == C_NULL ? 0 : Int(q-p+1)
 end
 
-function rsearch(a::ByteArray, b::Char, i::Integer = length(a))
+function _rsearch(a::ByteArray, b::Char, i::Integer = length(a))
     if isascii(b)
-        rsearch(a,UInt8(b),i)
+        _rsearch(a,UInt8(b),i)
     else
-        rsearch(a,Vector{UInt8}(string(b)),i).start
+        _rsearch(a,Vector{UInt8}(string(b)),i).start
     end
 end
 

@@ -2176,20 +2176,41 @@ end
 @deprecate search(str::Union{String,SubString}, re::Regex) findfirst(re, str)
 @deprecate search(s::AbstractString, r::Regex, idx::Integer) findnext(r, s, idx)
 @deprecate search(s::AbstractString, r::Regex) findfirst(r, s)
-@deprecate search(s::String, c::Char, i::Integer) findnext(equalto(c), s, i)
-@deprecate search(s::String, c::Char) findfirst(equalto(c), s)
+@deprecate search(s::AbstractString, c::Char, i::Integer) findnext(equalto(c), s, i)
+@deprecate search(s::AbstractString, c::Char) findfirst(equalto(c), s)
 # FIXME: no replacement to search for a multibyte char in a ByteArray
-@deprecate search(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = 1) findnext(equalto(b), a, i)
-@deprecate search(a::String, b::Union{Int8,UInt8}, i::Integer = 1) findnext(equalto(Char(b)), a, i)
-@deprecate search(a::ByteArray, b::Char, i::Integer = 1) findnext(equalto(Unt8(b)), a, i)
+@deprecate search(a::ByteArray, b::Union{Int8,UInt8}, i::Integer) findnext(equalto(b), a, i)
+@deprecate search(a::ByteArray, b::Union{Int8,UInt8}) findfirst(equalto(b), a)
+@deprecate search(a::String, b::Union{Int8,UInt8}, i::Integer) findnext(equalto(b), Vector{UInt8}(a), i)
+@deprecate search(a::String, b::Union{Int8,UInt8}) findfirst(equalto(b), Vector{UInt8}(a))
+@deprecate search(a::ByteArray, b::Char, i::Integer) findnext(equalto(UInt8(b)), a, i)
+@deprecate search(a::ByteArray, b::Char) findfirst(equalto(UInt8(b)), a)
 
 @deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findnext(x -> x in c, s, i)
-@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findfirst(x -> x in c, s, i)
+@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findfirst(x -> x in c, s)
 @deprecate search(s::AbstractString, t::AbstractString, i::Integer) findnext(t, s, i)
 @deprecate search(s::AbstractString, t::AbstractString) findfirst(t, s)
 
 @deprecate search(buf::IOBuffer, delim::UInt8) findfirst(equalto(delim), buf)
 @deprecate search(buf::Base.GenericIOBuffer, delim::UInt8) findfirst(equalto(delim), buf)
+
+@deprecate rsearch(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findprev(x -> x in c, s, i)
+@deprecate rsearch(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findlast(x -> x in c, s)
+@deprecate rsearch(s::AbstractString, t::AbstractString, i::Integer) findprev(t, s, i)
+@deprecate rsearch(s::AbstractString, t::AbstractString) findlast(t, s)
+@deprecate rsearch(s::ByteArray, t::ByteArray, i::Integer) findprev(t, s, i)
+@deprecate rsearch(s::ByteArray, t::ByteArray) findlast(t, s)
+
+@deprecate rsearch(str::Union{String,SubString}, re::Regex, idx::Integer) findprev(re, str, idx)
+@deprecate rsearch(str::Union{String,SubString}, re::Regex) findlast(re, str)
+@deprecate rsearch(s::AbstractString, r::Regex, idx::Integer) findprev(r, s, idx)
+@deprecate rsearch(s::AbstractString, r::Regex) findlast(r, s)
+@deprecate rsearch(s::AbstractString, c::Char, i::Integer) findprev(equalto(c), s, i)
+@deprecate rsearch(s::AbstractString, c::Char) findlast(equalto(c), s)
+# FIXME: no replacement to search for a multibyte char in a ByteArray
+@deprecate rsearch(a::Union{String,ByteArray}, b::Union{Int8,UInt8}, i::Integer = endof(a)) findprev(equalto(b), a, i)
+@deprecate rsearch(a::String, b::Union{Int8,UInt8}, i::Integer = endof(a)) findprev(equalto(Char(b)), a, i)
+@deprecate rsearch(a::ByteArray, b::Char, i::Integer = endof(a)) findprev(equalto(UInt8(b)), a, i)
 
 # END 0.7 deprecations
 

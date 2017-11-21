@@ -107,9 +107,9 @@ end
 # search and SubString (issue #5679)
 let str = "Hello, world!"
     u = SubString(str, 1, 5)
-    @test rsearch(u, "World") == 0:-1
-    @test rsearch(u, 'z') == 0
-    @test rsearch(u, "ll") == 3:4
+    @test findlast("World", u) == 0:-1
+    @test findlast(equalto('z'), u) == 0
+    @test findlast("ll", u) == 3:4
 end
 
 # SubString created from SubString

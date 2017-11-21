@@ -40,7 +40,7 @@ function complete_symbol(sym, ffunc)
 
     lookup_module = true
     t = Union{}
-    if rsearch(sym, non_identifier_chars) < rsearch(sym, '.')
+    if findlast(x -> x in non_identifier_chars, sym) < findlast(equalto('.'), sym)
         # Find module
         lookup_name, name = rsplit(sym, ".", limit=2)
 
@@ -257,7 +257,7 @@ function find_start_brace(s::AbstractString; c_start='(', c_end=')')
     end
     braces != 1 && return 0:-1, -1
     method_name_end = reverseind(r, i)
-    startind = nextind(s, rsearch(s, non_identifier_chars, method_name_end))
+    startind = nextind(s, findprev(x -> x in non_identifier_chars, s, method_name_end))
     return (startind:endof(s), method_name_end)
 end
 
@@ -412,8 +412,8 @@ function afterusing(string::String, startpos::Int)
 end
 
 function bslash_completions(string, pos)
-    slashpos = rsearch(string, '\\', pos)
-    if (rsearch(string, bslash_separators, pos) < slashpos &&
+    slashpos = findprev(equalto('\\'), string, pos)
+    if (findprev(x -> x in bslash_separators, string, pos) < slashpos &&
         !(1 < slashpos && (string[prevind(string, slashpos)]=='\\')))
         # latex / emoji symbol substitution
         s = string[slashpos:pos]
@@ -536,8 +536,8 @@ function completions(string, pos)
         return String[], 0:-1, false
     end
 
-    dotpos = rsearch(string, '.', pos)
-    startpos = nextind(string, rsearch(string, non_identifier_chars, pos))
+    dotpos = findprev(equalto('.'), string, pos)
+    startpos = nextind(string, findprev(x -> x in non_identifier_chars, string, pos))
 
     ffunc = (mod,x)->true
     suggestions = String[]

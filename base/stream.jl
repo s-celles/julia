@@ -1185,7 +1185,7 @@ end
 show(io::IO, s::BufferStream) = print(io,"BufferStream() bytes waiting:",nb_available(s.buffer),", isopen:", s.is_open)
 
 function wait_readbyte(s::BufferStream, c::UInt8)
-    while isopen(s) && findfirst(equalto(c), x.buffer) <= 0
+    while isopen(s) && findfirst(equalto(c), s.buffer) <= 0
         wait(s.r_c)
     end
 end

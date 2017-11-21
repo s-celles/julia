@@ -36,7 +36,8 @@ Base.lpad
 Base.rpad
 Base.findfirst(::AbstractString, ::AbstractString)
 Base.findnext(::AbstractString, ::AbstractString, ::Integer)
-Base.rsearch
+Base.findlast(::AbstractString, ::AbstractString)
+Base.findprev(::AbstractString, ::AbstractString, ::Integer)
 Base.searchindex
 Base.rsearchindex
 Base.contains(::AbstractString, ::AbstractString)

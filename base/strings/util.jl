@@ -321,7 +321,7 @@ split(str::T, splitter::Char;
 function _split(str::AbstractString, splitter, limit::Integer, keep_empty::Bool, strs::Array)
     i = start(str)
     n = endof(str)
-    r = findnext(splitter,str,i)
+    r = findfirst(splitter,str)
     j, k = first(r), nextind(str,last(r))
     while 0 < j <= n && length(strs) != limit-1
         if i < k
@@ -376,10 +376,17 @@ julia> rsplit(a,".";limit=2)
 """
 rsplit(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
     _rsplit(str, splitter, limit, keep, SubString{T}[])
+rsplit(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
+    limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+  _rsplit(str, x -> x in splitter, limit, keep, SubString{T}[])
+rsplit(str::T, splitter::Char;
+    limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+  _rsplit(str, equalto(splitter), limit, keep, SubString{T}[])
+
 function _rsplit(str::AbstractString, splitter, limit::Integer, keep_empty::Bool, strs::Array)
     i = start(str)
     n = endof(str)
-    r = rsearch(str,splitter)
+    r = findlast(splitter, str)
     j = first(r)-1
     k = last(r)
     while((0 <= j < n) && (length(strs) != limit-1))
@@ -388,7 +395,7 @@ function _rsplit(str::AbstractString, splitter, limit::Integer, keep_empty::Bool
             n = j
         end
         (k <= j) && (j = prevind(str,j))
-        r = rsearch(str,splitter,j)
+        r = findprev(splitter,str,j)
         j = first(r)-1
         k = last(r)
     end
