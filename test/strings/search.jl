@@ -17,9 +17,9 @@ end
 # sure that findnext/findprev/searchindex/rsearchindex are consistent
 # no matter what type of AbstractString the second argument is
 @test_throws BoundsError findnext(equalto('a'), "foo", 0)
-@test_throws BoundsError findnext(x -> x in Char[], "foo", 5)
-# @test_throws BoundsError findprev(x -> x in Char[], "foo", 0)
-@test_throws BoundsError findprev(x -> x in Char[], "foo", 5)
+@test_throws BoundsError findnext(occursin(Char[]), "foo", 5)
+# @test_throws BoundsError findprev(occursin(Char[]), "foo", 0)
+@test_throws BoundsError findprev(occursin(Char[]), "foo", 5)
 
 # @test_throws BoundsError searchindex("foo", Char[], 0)
 # @test_throws BoundsError searchindex("foo", Char[], 5)

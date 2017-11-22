@@ -279,7 +279,7 @@ split(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:SubString} 
     _split(str, splitter, limit, keep, T[])
 split(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
       limit::Integer=0, keep::Bool=true) where {T<:SubString} =
-    _split(str, x -> x in splitter, limit, keep, T[])
+    _split(str, occursin(splitter), limit, keep, T[])
 split(str::T, splitter::Char; limit::Integer=0, keep::Bool=true) where {T<:SubString} =
     _split(str, equalto(splitter), limit, keep, T[])
 
@@ -314,7 +314,7 @@ split(str::T, splitter;
     _split(str, splitter, limit, keep, SubString{T}[])
 split(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-    _split(str, x -> x in splitter, limit, keep, SubString{T}[])
+    _split(str, occursin(splitter), limit, keep, SubString{T}[])
 split(str::T, splitter::Char;
       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
     _split(str, equalto(splitter), limit, keep, SubString{T}[])
@@ -378,7 +378,7 @@ rsplit(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:AbstractSt
     _rsplit(str, splitter, limit, keep, SubString{T}[])
 rsplit(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
     limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-  _rsplit(str, x -> x in splitter, limit, keep, SubString{T}[])
+  _rsplit(str, occursin(splitter), limit, keep, SubString{T}[])
 rsplit(str::T, splitter::Char;
     limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
   _rsplit(str, equalto(splitter), limit, keep, SubString{T}[])
@@ -413,7 +413,7 @@ replace_new(str::String, pattern::Char, repl, count::Integer) =
     replace_new(str, equalto(pattern), repl, count)
 replace_new(str::String, pattern::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}},
             repl, count::Integer) =
-    replace_new(str, x -> x in pattern, repl, count)
+    replace_new(str, occursin(pattern), repl, count)
 function replace_new(str::String, pattern, repl, count::Integer)
     count == 0 && return str
     count < 0 && throw(DomainError(count, "`count` must be non-negative."))

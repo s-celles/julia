@@ -2186,16 +2186,16 @@ end
 @deprecate search(a::ByteArray, b::Char, i::Integer) findnext(equalto(UInt8(b)), a, i)
 @deprecate search(a::ByteArray, b::Char) findfirst(equalto(UInt8(b)), a)
 
-@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findnext(x -> x in c, s, i)
-@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findfirst(x -> x in c, s)
+@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findnext(occursin(c), s, i)
+@deprecate search(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findfirst(occursin(c), s)
 @deprecate search(s::AbstractString, t::AbstractString, i::Integer) findnext(t, s, i)
 @deprecate search(s::AbstractString, t::AbstractString) findfirst(t, s)
 
 @deprecate search(buf::IOBuffer, delim::UInt8) findfirst(equalto(delim), buf)
 @deprecate search(buf::Base.GenericIOBuffer, delim::UInt8) findfirst(equalto(delim), buf)
 
-@deprecate rsearch(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findprev(x -> x in c, s, i)
-@deprecate rsearch(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findlast(x -> x in c, s)
+@deprecate rsearch(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}, i::Integer) findprev(occursin(c), s, i)
+@deprecate rsearch(s::AbstractString, c::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}}) findlast(occursin(c), s)
 @deprecate rsearch(s::AbstractString, t::AbstractString, i::Integer) findprev(t, s, i)
 @deprecate rsearch(s::AbstractString, t::AbstractString) findlast(t, s)
 @deprecate rsearch(s::ByteArray, t::ByteArray, i::Integer) findprev(t, s, i)
