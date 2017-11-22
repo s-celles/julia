@@ -67,17 +67,20 @@ macro stat_call(sym, arg1type, arg)
         r = ccall($(Expr(:quote, sym)), Int32, ($(esc(arg1type)), Ptr{UInt8}), $(esc(arg)), stat_buf)
         r == 0 || r == Base.UV_ENOENT || r == Base.UV_ENOTDIR || throw(UVError("stat", r))
         st = StatStruct(stat_buf)
-        if ispath(st) != (r==0)
+        if ispath(st) != (r == 0)
             error("stat returned zero type for a valid path")
         end
         return st
     end
 end
 
-stat(fd::RawFD)     = @stat_call jl_fstat Int32 fd.fd
-stat(fd::Integer)   = @stat_call jl_fstat Int32 fd
+stat(fd::OS_HANDLE)         = @stat_call jl_fstat OS_HANDLE fd
 stat(path::AbstractString)  = @stat_call jl_stat  Cstring path
 lstat(path::AbstractString) = @stat_call jl_lstat Cstring path
+if RawFD !== OS_HANDLE
+    global stat(fd::RawFD)  = stat(Libc._get_osfhandle(fd))
+end
+stat(fd::Integer)           = stat(RawFD(fd))
 
 """
     stat(file)
