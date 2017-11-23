@@ -274,15 +274,6 @@ julia> rpad("March",20)
 """
 rpad(s, n::Integer, p=" ") = rpad(string(s),n,string(p))
 
-# splitter can be a Char, Vector{Char}, AbstractString, Regex, ...
-split(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:SubString} =
-    _split(str, splitter, limit, keep, T[])
-split(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
-      limit::Integer=0, keep::Bool=true) where {T<:SubString} =
-    _split(str, occursin(splitter), limit, keep, T[])
-split(str::T, splitter::Char; limit::Integer=0, keep::Bool=true) where {T<:SubString} =
-    _split(str, equalto(splitter), limit, keep, T[])
-
 """
     split(s::AbstractString, [chars]; limit::Integer=0, keep::Bool=true)
 
@@ -307,17 +298,18 @@ julia> split(a,".")
  "rch"
 ```
 """
-split
+function split end
 
 split(str::T, splitter;
       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-    _split(str, splitter, limit, keep, SubString{T}[])
+    _split(str, splitter, limit, keep, T <: SubString ? T[] : SubString{T}[])
 split(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-    _split(str, occursin(splitter), limit, keep, SubString{T}[])
+    _split(str, occursin(splitter), limit, keep, T <: SubString ? T[] : SubString{T}[])
 split(str::T, splitter::Char;
       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-    _split(str, equalto(splitter), limit, keep, SubString{T}[])
+    _split(str, equalto(splitter), limit, keep, T <: SubString ? T[] : SubString{T}[])
+
 function _split(str::AbstractString, splitter, limit::Integer, keep_empty::Bool, strs::Array)
     i = start(str)
     n = endof(str)
@@ -342,9 +334,6 @@ end
 
 # a bit oddball, but standard behavior in Perl, Ruby & Python:
 split(str::AbstractString) = split(str, _default_delims; limit=0, keep=false)
-
-rsplit(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:SubString} =
-    _rsplit(str, splitter, limit, keep, T[])
 
 """
     rsplit(s::AbstractString, [chars]; limit::Integer=0, keep::Bool=true)
@@ -374,14 +363,16 @@ julia> rsplit(a,".";limit=2)
  "h"
 ```
 """
+function rsplit end
+
 rsplit(str::T, splitter; limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-    _rsplit(str, splitter, limit, keep, SubString{T}[])
+    _rsplit(str, splitter, limit, keep, T <: SubString ? T[] : SubString{T}[])
 rsplit(str::T, splitter::Union{Tuple{Vararg{Char}},AbstractVector{Char},Set{Char}};
-    limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-  _rsplit(str, occursin(splitter), limit, keep, SubString{T}[])
+       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+  _rsplit(str, occursin(splitter), limit, keep, T <: SubString ? T[] : SubString{T}[])
 rsplit(str::T, splitter::Char;
-    limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
-  _rsplit(str, equalto(splitter), limit, keep, SubString{T}[])
+       limit::Integer=0, keep::Bool=true) where {T<:AbstractString} =
+  _rsplit(str, equalto(splitter), limit, keep, T <: SubString ? T[] : SubString{T}[])
 
 function _rsplit(str::AbstractString, splitter, limit::Integer, keep_empty::Bool, strs::Array)
     i = start(str)
