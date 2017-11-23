@@ -61,11 +61,12 @@ The following properties are in common use:
  - `:displaysize`: A `Tuple{Int,Int}` giving the size in rows and columns to use for text
    output. This can be used to override the display size for called functions, but to
    get the size of the screen use the `displaysize` function.
- - `:typeinfo`: a type specification characterizing the information already expressed
+ - `:typeinfo`: a `Type` characterizing the information already printed
    concerning the type of the object about to be displayed. This is mainly useful when
-   displaying a collection of object of the same type, so that redundant type information
-   can be avoided (e.g. `[[Int16(0)]]` can be shown as "Array{Int16,1}[[0]]" instead
-   of "Array{Int16,1}[Int16[0]]"
+   displaying a collection of objects of the same type, so that redundant type information
+   can be avoided (e.g. `[Float16(0)]` can be shown as "Float16[0.0]" instead
+   of "Float16[Float16(0.0)]" : while displaying the elements of the array, the `:typeinfo`
+   property will be set to `Float16`).
 
 ```jldoctest
 julia> function f(io::IO)

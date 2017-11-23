@@ -1613,7 +1613,7 @@ precompile(Tuple{typeof(Base.print), Base.IOContext{Base.Terminals.TTYTerminal},
 precompile(Tuple{typeof(Base.print), Base.IOContext{Base.Terminals.TTYTerminal}, String, String})
 precompile(Tuple{typeof(Base.print), Base.IOContext{Base.Terminals.TTYTerminal}, String, String, Char})
 precompile(Tuple{typeof(Base.show_vector), Base.IOContext{Base.Terminals.TTYTerminal}, Array{Int64, 1}, String, String})
-precompile(Tuple{typeof(Base._show), Base.IOContext{Base.Terminals.TTYTerminal}, Array{Int64, 1}, String})
+precompile(Tuple{typeof(Base._show_nonemtpy), Base.IOContext{Base.Terminals.TTYTerminal}, Array{Int64, 1}, String})
 precompile(Tuple{typeof(Base._show_empty), Base.IOContext{Base.Terminals.TTYTerminal}, Array{Int64, 1}})
 precompile(Tuple{typeof(Base.print_matrix), Base.IOContext{Base.Terminals.TTYTerminal}, Array{Int64, 1}, String, String, String})
 precompile(Tuple{typeof(Base.getindex), Base.ImmutableDict{Symbol, Any}, Symbol})

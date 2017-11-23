@@ -124,7 +124,8 @@ end
 
 function Base.show(io::IO, x::Float16)
     hastypeinfo = Float16 === get(io, :typeinfo, Any)
-    # if hastypeinfo, the printing will be more compact using `SHORTEST`
+    # if hastypeinfo, the printing would be more compact using `SHORTEST`
+    # while still retaining all the information
     # BUT: we want to print all digits in `show`, not in display, so we rely
     # on the :compact property to make the decision
     # (cf. https://github.com/JuliaLang/julia/pull/24651#issuecomment-345535687)

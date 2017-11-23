@@ -343,9 +343,9 @@ end
 # typeinfo agnostic
 
 # 0-dimensional arrays
-print_array(io::IO, X::AbstractArray{T,0} where T) = isassigned(X) ?
-    show(io, X[]) :
-    print(io, undef_ref_str)
+print_array(io::IO, X::AbstractArray{T,0} where T) =
+    isassigned(X) ? show(io, X[]) :
+                    print(io, undef_ref_str)
 
 print_array(io::IO, X::AbstractVecOrMat) = print_matrix(io, X)
 
@@ -368,7 +368,7 @@ function _display(io::IO, X::AbstractArray)
     io = IOContext(io, :typeinfo => eltype(X))
 
     # 1) print summary info
-    print(io, summary(X))
+    summary(io, X)
     isempty(X) && return
     print(io, ":")
     if get(io, :limit, false) && displaysize(io)[1]-4 <= 0
@@ -386,14 +386,14 @@ end
 
 ### non-Vector arrays
 
-# _show & _show_empty: main helper function for show(io, X)
+# _show_nonemtpy & _show_empty: main helper functions for show(io, X)
 # typeinfo agnostic
 
 """
-`_show(io, X::AbstractMatrix, prefix)` prints matrix X with opening and closing square brackets,
+`_show_nonemtpy(io, X::AbstractMatrix, prefix)` prints matrix X with opening and closing square brackets,
 preceded by `prefix`, supposed to encode the type of the elements.
 """
-function _show(io::IO, X::AbstractMatrix, prefix::String)
+function _show_nonemtpy(io::IO, X::AbstractMatrix, prefix::String)
     @assert !isempty(X)
     limit = get(io, :limit, false)::Bool
     indr, indc = indices(X,1), indices(X,2)
@@ -437,13 +437,13 @@ function _show(io::IO, X::AbstractMatrix, prefix::String)
 end
 
 
-_show(io::IO, X::AbstractArray, prefix::String) =
-    show_nd(io, X, (io, slice) -> _show(io, slice, prefix), false)
+_show_nonemtpy(io::IO, X::AbstractArray, prefix::String) =
+    show_nd(io, X, (io, slice) -> _show_nonemtpy(io, slice, prefix), false)
 
 # a specific call path is used to show vectors (show_vector)
-_show(::IO, ::AbstractVector, ::String) = error("_show(::IO, ::AbstractVector, ::String) is not implemented")
+_show_nonemtpy(::IO, ::AbstractVector, ::String) = error("_show_nonemtpy(::IO, ::AbstractVector, ::String) is not implemented")
 
-_show(io::IO, X::AbstractArray{T,0} where T, prefix::String) = print_array(io, X)
+_show_nonemtpy(io::IO, X::AbstractArray{T,0} where T, prefix::String) = print_array(io, X)
 
 # NOTE: it's not clear how this method could use the :typeinfo attribute
 _show_empty(io::IO, X::Array{T}) where {T} = print(io, "Array{$T}(", join(size(X),','), ')')
@@ -456,7 +456,7 @@ function show(io::IO, X::AbstractArray)
     io = IOContext(io, :typeinfo => eltype(X), :compact => true)
     isempty(X) ?
         _show_empty(io, X) :
-        _show(io, X, prefix)
+        _show_nonemtpy(io, X, prefix)
 end
 
 ### Vector arrays
@@ -472,7 +472,7 @@ function show_vector(io::IO, v, opn='[', cls=']')
     if limited && _length(v) > 20
         inds = indices1(v)
         show_delim_array(io, v, opn, ",", "", false, inds[1], inds[1]+9)
-        print(io, "  \u2026  ") # i.e. "  …  "
+        print(io, "  …  ")
         show_delim_array(io, v, "", ",", cls, false, inds[end-9], inds[end])
     else
         show_delim_array(io, v, opn, ",", cls, false)
@@ -498,7 +498,7 @@ show(io::IO, X::AbstractVector) = show_vector(io, X)
 # specially (alternatively we could also specialize
 # `collection_eltype` for all known collection types, but this seems
 # like a heavy solution when the simpler solution seems to be enough)
-function collection_eltype(typeinfo::Union{DataType,UnionAll})::Union{DataType,UnionAll,Void}
+function collection_eltype(typeinfo::Type)::Union{Type,Void}
     if typeinfo == Any
         # the current context knows nothing about what is being displayed, not even
         # whether it's a collection or scalar
