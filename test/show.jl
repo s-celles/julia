@@ -1009,6 +1009,7 @@ end
     @test showstr([Float16(1)]) == "Float16[1.0]"
     @test showstr([[Float16(1)]]) == "Array{Float16,1}[[1.0]]"
     @test replstr(Real[Float16(1)]) == "1-element Array{Real,1}:\n Float16(1.0)"
+    @test replstr(Array{Real}[Real[1]]) == "1-element Array{Array{Real,N} where N,1}:\n [1]"
     @testset "nested Any eltype" begin
         x = Any[Any[Any[1]]]
         # The element of x (i.e. x[1]) has an eltype which can't be deduced
