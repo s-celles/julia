@@ -98,6 +98,7 @@ export
     RoundUp,
     RowVector,
     AbstractSerializer,
+    SecureString,
     SerializationState,
     Set,
     StepRange,

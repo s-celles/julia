@@ -267,3 +267,32 @@ let
     @test cstring != C_NULL
     @test C_NULL != cstring
 end
+
+## Secure strings ##
+
+let
+    str = String("foobar")
+    secure = SecureString(str)
+    @test str == secure
+
+    # Securely wiping the SecureString will also wipe out the original source
+    Base.securezero!(secure)
+    @test secure != "foobar"
+    @test str != "foobar"
+end
+
+let
+    str = "foobar"
+    secure_a = SecureString(str)
+    secure_b = secure_a
+
+    secure_a = nothing
+    gc()
+
+    @test str == "foobar"  # Still retaining a reference to the original SecureString
+
+    secure_b = nothing
+    gc()
+
+    @test str != "foobar"
+end
