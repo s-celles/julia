@@ -25,18 +25,20 @@ end
     SecureString(string::AbstractString)
 
 A string where the contents will be securely wiped when the last reference to the secure
-string has been removed. If `string` is of type `String` then the memory of the original
-parameter will also be securely wiped.
+string has been removed. However, it is considered best practise to wipe the string using
+`securezero!(::SecureString)` as soon as the secure data is no longer required. Note that
+when the `string` parameter is of type `String` then the memory of the original string
+will also be securely wiped.
 
 # Examples
 ```jldoctest
-julia> str = "abc"
+julia> str = "abc"::String
 "abc"
 
 julia> SecureString(str)
 "abc"
 
-julia> gc()  # Cause the SecureString above to be garbage collected
+julia> gc()  # Ensure the SecureString above is finalized
 
 julia> str
 "\0\0\0"
