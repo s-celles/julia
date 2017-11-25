@@ -398,7 +398,7 @@ include("statistics.jl")
 include("libgit2/libgit2.jl")
 
 # package manager replacement functions
-include("_pkg.jl")
+# include("_pkg.jl")
 
 # sparse matrices, vectors, and sparse linear algebra
 include("sparse/sparse.jl")
@@ -467,7 +467,7 @@ using Base
 unshift!(Base._included_files, (@__MODULE__, joinpath(@__DIR__, "sysimg.jl")))
 
 # load some stdlib packages but don't put their names in Main
-Base.require(:Pkg)
+Base.require(:Pkg3)
 Base.require(:DelimitedFiles)
 Base.require(:Test)
 Base.require(:Dates)
@@ -475,3 +475,5 @@ Base.require(:Dates)
 empty!(LOAD_PATH)
 
 Base.isfile("userimg.jl") && Base.include(Main, "userimg.jl")
+
+println("Done!")
