@@ -426,6 +426,7 @@ export
     colon,
     conj!,
     copy!,
+    memcopy!,
     cumprod,
     cumprod!,
     cumsum,

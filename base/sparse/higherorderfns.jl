@@ -220,15 +220,15 @@ end
 @inline _densecoloffsets(A::SparseMatrixCSC) = 0:A.m:(A.m*(A.n - 1))
 function _densestructure!(A::SparseVector)
     expandstorage!(A, A.n)
-    copy!(A.nzind, 1:A.n)
+    memcopy!(A.nzind, 1:A.n)
     return A
 end
 function _densestructure!(A::SparseMatrixCSC)
     nnzA = A.m * A.n
     expandstorage!(A, nnzA)
-    copy!(A.colptr, 1:A.m:(nnzA + 1))
+    memcopy!(A.colptr, 1:A.m:(nnzA + 1))
     for k in _densecoloffsets(A)
-        copy!(A.rowval, k + 1, 1:A.m)
+        memcopy!(A.rowval, k + 1, 1:A.m)
     end
     return A
 end

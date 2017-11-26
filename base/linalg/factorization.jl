@@ -67,7 +67,7 @@ for (f1, f2) in ((:\, :A_ldiv_B!),
         function $f1(F::Factorization, B::AbstractVecOrMat)
             TFB = typeof(oneunit(eltype(B)) / oneunit(eltype(F)))
             BB = similar(B, TFB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             $f2(F, BB)
         end
     end
@@ -76,7 +76,7 @@ end
 # support the same 3-arg idiom as in our other in-place A_*_B functions:
 for f in (:A_ldiv_B!, :Ac_ldiv_B!, :At_ldiv_B!)
     @eval $f(Y::AbstractVecOrMat, A::Factorization, B::AbstractVecOrMat) =
-        $f(A, copy!(Y, B))
+        $f(A, memcopy!(Y, B))
 end
 
 # fallback methods for transposed solves

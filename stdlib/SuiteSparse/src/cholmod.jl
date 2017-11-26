@@ -1030,14 +1030,14 @@ end
 function convert(::Type{Matrix{T}}, D::Dense{T}) where T
     s = unsafe_load(D.p)
     a = Matrix{T}(uninitialized, s.nrow, s.ncol)
-    copy!(a, D)
+    memcopy!(a, D)
 end
 
-Base.copy!(dest::Base.PermutedDimsArrays.PermutedDimsArray, src::Dense) = _copy!(dest, src) # ambig
-Base.copy!(dest::Dense{T}, D::Dense{T}) where {T<:VTypes} = _copy!(dest, D)
-Base.copy!(dest::AbstractArray{T}, D::Dense{T}) where {T<:VTypes} = _copy!(dest, D)
-Base.copy!(dest::AbstractArray{T,2}, D::Dense{T}) where {T<:VTypes} = _copy!(dest, D)
-Base.copy!(dest::AbstractArray, D::Dense) = _copy!(dest, D)
+Base.memcopy!(dest::Base.PermutedDimsArrays.PermutedDimsArray, src::Dense) = _copy!(dest, src) # ambig
+Base.memcopy!(dest::Dense{T}, D::Dense{T}) where {T<:VTypes} = _copy!(dest, D)
+Base.memcopy!(dest::AbstractArray{T}, D::Dense{T}) where {T<:VTypes} = _copy!(dest, D)
+Base.memcopy!(dest::AbstractArray{T,2}, D::Dense{T}) where {T<:VTypes} = _copy!(dest, D)
+Base.memcopy!(dest::AbstractArray, D::Dense) = _copy!(dest, D)
 
 function _copy!(dest::AbstractArray, D::Dense)
     s = unsafe_load(D.p)
@@ -1060,7 +1060,7 @@ function convert(::Type{Vector{T}}, D::Dense{T}) where T
     if size(D, 2) > 1
         throw(DimensionMismatch("input must be a vector but had $(size(D, 2)) columns"))
     end
-    copy!(Vector{T}(uninitialized, size(D, 1)), D)
+    memcopy!(Vector{T}(uninitialized, size(D, 1)), D)
 end
 convert(::Type{Vector}, D::Dense{T}) where {T} = convert(Vector{T}, D)
 

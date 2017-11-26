@@ -26,11 +26,11 @@ regions.
 adjoint!(B::AbstractMatrix, A::AbstractMatrix) = transpose_f!(adjoint, B, A)
 function transpose!(B::AbstractVector, A::AbstractMatrix)
     indices(B,1) == indices(A,2) && indices(A,1) == 1:1 || throw(DimensionMismatch("transpose"))
-    copy!(B, A)
+    memcopy!(B, A)
 end
 function transpose!(B::AbstractMatrix, A::AbstractVector)
     indices(B,2) == indices(A,1) && indices(B,1) == 1:1 || throw(DimensionMismatch("transpose"))
-    copy!(B, A)
+    memcopy!(B, A)
 end
 function adjoint!(B::AbstractVector, A::AbstractMatrix)
     indices(B,1) == indices(A,2) && indices(A,1) == 1:1 || throw(DimensionMismatch("transpose"))

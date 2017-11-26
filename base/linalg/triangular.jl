@@ -107,13 +107,13 @@ parent(A::AbstractTriangular) = A.data
 
 function convert(::Type{Matrix{T}}, A::LowerTriangular) where T
     B = Matrix{T}(uninitialized, size(A, 1), size(A, 1))
-    copy!(B, A.data)
+    memcopy!(B, A.data)
     tril!(B)
     B
 end
 function convert(::Type{Matrix{T}}, A::UnitLowerTriangular) where T
     B = Matrix{T}(uninitialized, size(A, 1), size(A, 1))
-    copy!(B, A.data)
+    memcopy!(B, A.data)
     tril!(B)
     for i = 1:size(B,1)
         B[i,i] = 1
@@ -122,13 +122,13 @@ function convert(::Type{Matrix{T}}, A::UnitLowerTriangular) where T
 end
 function convert(::Type{Matrix{T}}, A::UpperTriangular) where T
     B = Matrix{T}(uninitialized, size(A, 1), size(A, 1))
-    copy!(B, A.data)
+    memcopy!(B, A.data)
     triu!(B)
     B
 end
 function convert(::Type{Matrix{T}}, A::UnitUpperTriangular) where T
     B = Matrix{T}(uninitialized, size(A, 1), size(A, 1))
-    copy!(B, A.data)
+    memcopy!(B, A.data)
     triu!(B)
     for i = 1:size(B,1)
         B[i,i] = 1
@@ -372,7 +372,7 @@ function -(A::UnitUpperTriangular)
 end
 
 # copy and scale
-function copy!(A::T, B::T) where T<:Union{UpperTriangular,UnitUpperTriangular}
+function memcopy!(A::T, B::T) where T<:Union{UpperTriangular,UnitUpperTriangular}
     n = size(B,1)
     for j = 1:n
         for i = 1:(isa(B, UnitUpperTriangular) ? j-1 : j)
@@ -381,7 +381,7 @@ function copy!(A::T, B::T) where T<:Union{UpperTriangular,UnitUpperTriangular}
     end
     return A
 end
-function copy!(A::T, B::T) where T<:Union{LowerTriangular,UnitLowerTriangular}
+function memcopy!(A::T, B::T) where T<:Union{LowerTriangular,UnitLowerTriangular}
     n = size(B,1)
     for j = 1:n
         for i = (isa(B, UnitLowerTriangular) ? j+1 : j):n
@@ -427,7 +427,7 @@ scale!(c::Number, A::Union{UpperTriangular,LowerTriangular}) = scale!(A,c)
 +(A::UnitLowerTriangular, B::LowerTriangular) = LowerTriangular(tril(A.data, -1) + B.data + I)
 +(A::UnitUpperTriangular, B::UnitUpperTriangular) = UpperTriangular(triu(A.data, 1) + triu(B.data, 1) + 2I)
 +(A::UnitLowerTriangular, B::UnitLowerTriangular) = LowerTriangular(tril(A.data, -1) + tril(B.data, -1) + 2I)
-+(A::AbstractTriangular, B::AbstractTriangular) = copy!(similar(parent(A)), A) + copy!(similar(parent(B)), B)
++(A::AbstractTriangular, B::AbstractTriangular) = memcopy!(similar(parent(A)), A) + memcopy!(similar(parent(B)), B)
 
 -(A::UpperTriangular, B::UpperTriangular) = UpperTriangular(A.data - B.data)
 -(A::LowerTriangular, B::LowerTriangular) = LowerTriangular(A.data - B.data)
@@ -437,24 +437,24 @@ scale!(c::Number, A::Union{UpperTriangular,LowerTriangular}) = scale!(A,c)
 -(A::UnitLowerTriangular, B::LowerTriangular) = LowerTriangular(tril(A.data, -1) - B.data + I)
 -(A::UnitUpperTriangular, B::UnitUpperTriangular) = UpperTriangular(triu(A.data, 1) - triu(B.data, 1))
 -(A::UnitLowerTriangular, B::UnitLowerTriangular) = LowerTriangular(tril(A.data, -1) - tril(B.data, -1))
--(A::AbstractTriangular, B::AbstractTriangular) = copy!(similar(parent(A)), A) - copy!(similar(parent(B)), B)
+-(A::AbstractTriangular, B::AbstractTriangular) = memcopy!(similar(parent(A)), A) - memcopy!(similar(parent(B)), B)
 
 ######################
 # BlasFloat routines #
 ######################
 
 A_mul_B!(A::Tridiagonal, B::AbstractTriangular) = A*full!(B)
-A_mul_B!(C::AbstractMatrix, A::AbstractTriangular, B::Tridiagonal) = A_mul_B!(C, copy!(similar(parent(A)), A), B)
-A_mul_B!(C::AbstractMatrix, A::Tridiagonal, B::AbstractTriangular) = A_mul_B!(C, A, copy!(similar(parent(B)), B))
+A_mul_B!(C::AbstractMatrix, A::AbstractTriangular, B::Tridiagonal) = A_mul_B!(C, memcopy!(similar(parent(A)), A), B)
+A_mul_B!(C::AbstractMatrix, A::Tridiagonal, B::AbstractTriangular) = A_mul_B!(C, A, memcopy!(similar(parent(B)), B))
 A_mul_Bt!(C::AbstractVecOrMat, A::AbstractTriangular, B::AbstractVecOrMat) = A_mul_B!(A, transpose!(C, B))
 A_mul_Bc!(C::AbstractMatrix, A::AbstractTriangular, B::AbstractVecOrMat) = A_mul_B!(A, adjoint!(C, B))
 A_mul_Bc!(C::AbstractVecOrMat, A::AbstractTriangular, B::AbstractVecOrMat) = A_mul_B!(A, adjoint!(C, B))
 # The three methods are neceesary to avoid ambiguities with definitions in matmul.jl
 for f in (:A_mul_B!, :Ac_mul_B!, :At_mul_B!)
     @eval begin
-        ($f)(C::AbstractVector  , A::AbstractTriangular, B::AbstractVector)   = ($f)(A, copy!(C, B))
-        ($f)(C::AbstractMatrix  , A::AbstractTriangular, B::AbstractVecOrMat) = ($f)(A, copy!(C, B))
-        ($f)(C::AbstractVecOrMat, A::AbstractTriangular, B::AbstractVecOrMat) = ($f)(A, copy!(C, B))
+        ($f)(C::AbstractVector  , A::AbstractTriangular, B::AbstractVector)   = ($f)(A, memcopy!(C, B))
+        ($f)(C::AbstractMatrix  , A::AbstractTriangular, B::AbstractVecOrMat) = ($f)(A, memcopy!(C, B))
+        ($f)(C::AbstractVecOrMat, A::AbstractTriangular, B::AbstractVecOrMat) = ($f)(A, memcopy!(C, B))
     end
 end
 
@@ -529,7 +529,7 @@ for (t, uploc, isunitc) in ((:LowerTriangular, 'L', 'N'),
             elseif p == Inf
                 return inv(LAPACK.trcon!('I', $uploc, $isunitc, A.data))
             else # use fallback
-                return cond(copy!(similar(parent(A)), A), p)
+                return cond(memcopy!(similar(parent(A)), A), p)
             end
         end
     end
@@ -1441,7 +1441,7 @@ for (f1, f2) in ((:*, :A_mul_B!), (:\, :A_ldiv_B!))
             TAB = typeof(($f1)(zero(eltype(A)), zero(eltype(B))) +
                          ($f1)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return LowerTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
 
@@ -1449,7 +1449,7 @@ for (f1, f2) in ((:*, :A_mul_B!), (:\, :A_ldiv_B!))
             TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                          (*)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return LowerTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
 
@@ -1457,7 +1457,7 @@ for (f1, f2) in ((:*, :A_mul_B!), (:\, :A_ldiv_B!))
             TAB = typeof(($f1)(zero(eltype(A)), zero(eltype(B))) +
                          ($f1)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return UpperTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
 
@@ -1465,7 +1465,7 @@ for (f1, f2) in ((:*, :A_mul_B!), (:\, :A_ldiv_B!))
             TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                          (*)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return UpperTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
     end
@@ -1478,7 +1478,7 @@ for (f1, f2) in ((:Ac_mul_B, :Ac_mul_B!), (:At_mul_B, :At_mul_B!),
             TAB = typeof(($f1)(zero(eltype(A)), zero(eltype(B))) +
                          ($f1)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return LowerTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
 
@@ -1486,7 +1486,7 @@ for (f1, f2) in ((:Ac_mul_B, :Ac_mul_B!), (:At_mul_B, :At_mul_B!),
             TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                          (*)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return LowerTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
 
@@ -1494,7 +1494,7 @@ for (f1, f2) in ((:Ac_mul_B, :Ac_mul_B!), (:At_mul_B, :At_mul_B!),
             TAB = typeof(($f1)(zero(eltype(A)), zero(eltype(B))) +
                          ($f1)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return UpperTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
 
@@ -1502,7 +1502,7 @@ for (f1, f2) in ((:Ac_mul_B, :Ac_mul_B!), (:At_mul_B, :At_mul_B!),
             TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                          (*)(zero(eltype(A)), zero(eltype(B))))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             return UpperTriangular($f2(convert(AbstractMatrix{TAB}, A), BB))
         end
     end
@@ -1512,28 +1512,28 @@ function (/)(A::LowerTriangular, B::LowerTriangular)
     TAB = typeof((/)(zero(eltype(A)), zero(eltype(B))) +
                  (/)(zero(eltype(A)), zero(eltype(B))))
     AA = similar(A, TAB, size(A))
-    copy!(AA, A)
+    memcopy!(AA, A)
     return LowerTriangular(A_rdiv_B!(AA, convert(AbstractMatrix{TAB}, B)))
 end
 function (/)(A::LowerTriangular, B::UnitLowerTriangular)
     TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                  (*)(zero(eltype(A)), zero(eltype(B))))
     AA = similar(A, TAB, size(A))
-    copy!(AA, A)
+    memcopy!(AA, A)
     return LowerTriangular(A_rdiv_B!(AA, convert(AbstractMatrix{TAB}, B)))
 end
 function (/)(A::UpperTriangular, B::UpperTriangular)
     TAB = typeof((/)(zero(eltype(A)), zero(eltype(B))) +
                  (/)(zero(eltype(A)), zero(eltype(B))))
     AA = similar(A, TAB, size(A))
-    copy!(AA, A)
+    memcopy!(AA, A)
     return UpperTriangular(A_rdiv_B!(AA, convert(AbstractMatrix{TAB}, B)))
 end
 function (/)(A::UpperTriangular, B::UnitUpperTriangular)
     TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                  (*)(zero(eltype(A)), zero(eltype(B))))
     AA = similar(A, TAB, size(A))
-    copy!(AA, A)
+    memcopy!(AA, A)
     return UpperTriangular(A_rdiv_B!(AA, convert(AbstractMatrix{TAB}, B)))
 end
 
@@ -1544,7 +1544,7 @@ for (f1, f2) in ((:A_mul_Bc, :A_mul_Bc!), (:A_mul_Bt, :A_mul_Bt!),
             TAB = typeof(($f1)(zero(eltype(A)), zero(eltype(B))) +
                          ($f1)(zero(eltype(A)), zero(eltype(B))))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             return LowerTriangular($f2(AA, convert(AbstractMatrix{TAB}, B)))
         end
 
@@ -1552,7 +1552,7 @@ for (f1, f2) in ((:A_mul_Bc, :A_mul_Bc!), (:A_mul_Bt, :A_mul_Bt!),
             TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                          (*)(zero(eltype(A)), zero(eltype(B))))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             return LowerTriangular($f2(AA, convert(AbstractMatrix{TAB}, B)))
         end
 
@@ -1560,7 +1560,7 @@ for (f1, f2) in ((:A_mul_Bc, :A_mul_Bc!), (:A_mul_Bt, :A_mul_Bt!),
             TAB = typeof(($f1)(zero(eltype(A)), zero(eltype(B))) +
                          ($f1)(zero(eltype(A)), zero(eltype(B))))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             return UpperTriangular($f2(AA, convert(AbstractMatrix{TAB}, B)))
         end
 
@@ -1568,7 +1568,7 @@ for (f1, f2) in ((:A_mul_Bc, :A_mul_Bc!), (:A_mul_Bt, :A_mul_Bt!),
             TAB = typeof((*)(zero(eltype(A)), zero(eltype(B))) +
                          (*)(zero(eltype(A)), zero(eltype(B))))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             return UpperTriangular($f2(AA, convert(AbstractMatrix{TAB}, B)))
         end
     end
@@ -1581,7 +1581,7 @@ for (f, g) in ((:*, :A_mul_B!), (:Ac_mul_B, :Ac_mul_B!), (:At_mul_B, :At_mul_B!)
         function ($f)(A::AbstractTriangular, B::AbstractTriangular)
             TAB = typeof(zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             ($g)(convert(AbstractArray{TAB}, A), BB)
         end
     end
@@ -1591,7 +1591,7 @@ for (f, g) in ((:A_mul_Bc, :A_mul_Bc!), (:A_mul_Bt, :A_mul_Bt!))
         function ($f)(A::AbstractTriangular, B::AbstractTriangular)
             TAB = typeof(zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             ($g)(AA, convert(AbstractArray{TAB}, B))
         end
     end
@@ -1605,7 +1605,7 @@ for (f, g) in ((:*, :A_mul_B!), (:Ac_mul_B, :Ac_mul_B!), (:At_mul_B, :At_mul_B!)
         function ($f)(A::AbstractTriangular, B::$mat)
             TAB = typeof(zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             ($g)(convert(AbstractArray{TAB}, A), BB)
         end
     end
@@ -1616,7 +1616,7 @@ for (f, g) in ((:\, :A_ldiv_B!), (:Ac_ldiv_B, :Ac_ldiv_B!), (:At_ldiv_B, :At_ldi
         function ($f)(A::Union{UnitUpperTriangular,UnitLowerTriangular}, B::$mat)
             TAB = typeof(zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             ($g)(convert(AbstractArray{TAB}, A), BB)
         end
     end
@@ -1627,7 +1627,7 @@ for (f, g) in ((:\, :A_ldiv_B!), (:Ac_ldiv_B, :Ac_ldiv_B!), (:At_ldiv_B, :At_ldi
         function ($f)(A::Union{UpperTriangular,LowerTriangular}, B::$mat)
             TAB = typeof((zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))/one(eltype(A)))
             BB = similar(B, TAB, size(B))
-            copy!(BB, B)
+            memcopy!(BB, B)
             ($g)(convert(AbstractArray{TAB}, A), BB)
         end
     end
@@ -1638,7 +1638,7 @@ for (f, g) in ((:*, :A_mul_B!), (:A_mul_Bc, :A_mul_Bc!), (:A_mul_Bt, :A_mul_Bt!)
         function ($f)(A::$mat, B::AbstractTriangular)
             TAB = typeof(zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             ($g)(AA, convert(AbstractArray{TAB}, B))
         end
     end
@@ -1649,7 +1649,7 @@ for (f, g) in ((:/, :A_rdiv_B!), (:A_rdiv_Bc, :A_rdiv_Bc!), (:A_rdiv_Bt, :A_rdiv
         function ($f)(A::$mat, B::Union{UnitUpperTriangular, UnitLowerTriangular})
             TAB = typeof(zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             ($g)(AA, convert(AbstractArray{TAB}, B))
         end
     end
@@ -1661,7 +1661,7 @@ for (f, g) in ((:/, :A_rdiv_B!), (:A_rdiv_Bc, :A_rdiv_Bc!), (:A_rdiv_Bt, :A_rdiv
         function ($f)(A::$mat, B::Union{UpperTriangular,LowerTriangular})
             TAB = typeof((zero(eltype(A))*zero(eltype(B)) + zero(eltype(A))*zero(eltype(B)))/one(eltype(A)))
             AA = similar(A, TAB, size(A))
-            copy!(AA, A)
+            memcopy!(AA, A)
             ($g)(AA, convert(AbstractArray{TAB}, B))
         end
     end
@@ -1747,7 +1747,7 @@ function powm!(A0::UpperTriangular{<:BlasFloat}, p::Real)
         for i = 1:n
             @inbounds S[i, i] = S[i, i] + 1
         end
-        copy!(Stmp, S)
+        memcopy!(Stmp, S)
         scale!(S, A, c)
         A_ldiv_B!(Stmp, S.data)
 
@@ -1755,14 +1755,14 @@ function powm!(A0::UpperTriangular{<:BlasFloat}, p::Real)
         for i = 1:n
             @inbounds S[i, i] = S[i, i] + 1
         end
-        copy!(Stmp, S)
+        memcopy!(Stmp, S)
         scale!(S, A, c)
         A_ldiv_B!(Stmp, S.data)
     end
     for i = 1:n
         S[i, i] = S[i, i] + 1
     end
-    copy!(Stmp, S)
+    memcopy!(Stmp, S)
     scale!(S, A, -p)
     A_ldiv_B!(Stmp, S.data)
     for i = 1:n
@@ -1772,7 +1772,7 @@ function powm!(A0::UpperTriangular{<:BlasFloat}, p::Real)
     blockpower!(A0, S, p/(2^s))
     for m = 1:s
         A_mul_B!(Stmp.data, S, S)
-        copy!(S, Stmp)
+        memcopy!(S, Stmp)
         blockpower!(A0, S, p/(2^(s-m)))
     end
     scale!(S, normA0^p)
@@ -2207,7 +2207,7 @@ eigfact(A::AbstractTriangular) = Eigen(eigvals(A), eigvecs(A))
 # Generic singular systems
 for func in (:svd, :svdfact, :svdfact!, :svdvals)
     @eval begin
-        ($func)(A::AbstractTriangular) = ($func)(copy!(similar(parent(A)), A))
+        ($func)(A::AbstractTriangular) = ($func)(memcopy!(similar(parent(A)), A))
     end
 end
 

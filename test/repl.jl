@@ -702,7 +702,7 @@ fake_repl() do stdin_write, stdout_read, repl
     Base._atreplinit(repl)
     @test slot[]
     @test_throws MethodError Base.repl_hooks[1](repl)
-    copy!(Base.repl_hooks, saved_replinit)
+    memcopy!(Base.repl_hooks, saved_replinit)
     nothing
 end
 

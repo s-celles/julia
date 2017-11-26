@@ -111,9 +111,9 @@ MersenneTwister(seed=nothing) =
     srand(MersenneTwister(Vector{UInt32}(), DSFMT_state()), seed)
 
 function copy!(dst::MersenneTwister, src::MersenneTwister)
-    copy!(resize!(dst.seed, length(src.seed)), src.seed)
+    memcopy!(resize!(dst.seed, length(src.seed)), src.seed)
     copy!(dst.state, src.state)
-    copy!(dst.vals, src.vals)
+    memcopy!(dst.vals, src.vals)
     dst.idx = src.idx
     dst
 end
@@ -184,7 +184,7 @@ end
 #### srand()
 
 function srand(r::MersenneTwister, seed::Vector{UInt32})
-    copy!(resize!(r.seed, length(seed)), seed)
+    memcopy!(resize!(r.seed, length(seed)), seed)
     dsfmt_init_by_array(r.state, r.seed)
     mt_setempty!(r)
     return r

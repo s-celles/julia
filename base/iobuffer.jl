@@ -4,7 +4,7 @@
 
 # Stateful string
 mutable struct GenericIOBuffer{T<:AbstractVector{UInt8}} <: IO
-    data::T # T should support: getindex, setindex!, length, copy!, and resize!
+    data::T # T should support: getindex, setindex!, length, memcopy!, and resize!
     readable::Bool
     writable::Bool
     seekable::Bool # if not seekable, implementation is free to destroy (compact) past read data
@@ -206,7 +206,7 @@ function compact(io::GenericIOBuffer)
         ptr = io.ptr
         bytes_to_move = nb_available(io)
     end
-    copy!(io.data, 1, io.data, ptr, bytes_to_move)
+    memcopy!(io.data, 1, io.data, ptr, bytes_to_move)
     io.size -= ptr - 1
     io.ptr -= ptr - 1
     io.mark -= ptr - 1
@@ -267,7 +267,7 @@ function take!(io::GenericIOBuffer)
     ismarked(io) && unmark(io)
     if io.seekable
         nbytes = io.size
-        data = copy!(StringVector(nbytes), 1, io.data, 1, nbytes)
+        data = memcopy!(StringVector(nbytes), 1, io.data, 1, nbytes)
     else
         nbytes = nb_available(io)
         data = read!(io,StringVector(nbytes))

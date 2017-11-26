@@ -1735,11 +1735,11 @@ end
     @test a == ones(Complex,1,5)
 end
 
-@testset "bounds checking for copy!" begin
+@testset "bounds checking for memcopy!" begin
     a = rand(5,3)
     b = rand(6,7)
-    @test_throws BoundsError copy!(a,b)
-    @test_throws ArgumentError copy!(a,2:3,1:3,b,1:5,2:7)
+    @test_throws BoundsError memcopy!(a,b)
+    @test_throws ArgumentError memcopy!(a,2:3,1:3,b,1:5,2:7)
     @test_throws ArgumentError Base.copy_transpose!(a,2:3,1:3,b,1:5,2:7)
 end
 
@@ -1864,8 +1864,8 @@ i,j = findn(S)
 @test vec(i) == vec(iall)
 @test vec(j) == vec(jall)
 
-copy!(B, A)
-copy!(S, A)
+memcopy!(B, A)
+memcopy!(S, A)
 
 @test cat(1, A, B, S) == cat(1, A, A, A)
 @test cat(2, A, B, S) == cat(2, A, A, A)

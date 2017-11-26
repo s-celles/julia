@@ -243,7 +243,7 @@ broadcast_indices
 broadcast(f, x::Number...) = f(x...)
 @inline broadcast(f, t::NTuple{N,Any}, ts::Vararg{NTuple{N,Any}}) where {N} = map(f, t, ts...)
 @inline broadcast!(::typeof(identity), x::AbstractArray{T,N}, y::AbstractArray{S,N}) where {T,S,N} =
-    Base.indices(x) == Base.indices(y) ? copy!(x, y) : _broadcast!(identity, x, y)
+    Base.indices(x) == Base.indices(y) ? memcopy!(x, y) : _broadcast!(identity, x, y)
 
 # special cases for "X .= ..." (broadcast!) assignments
 broadcast!(::typeof(identity), X::AbstractArray, x::Number) = fill!(X, x)

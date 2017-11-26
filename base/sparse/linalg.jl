@@ -828,11 +828,11 @@ inv(A::SparseMatrixCSC) = error("The inverse of a sparse matrix can often be den
 function copyinds!(C::SparseMatrixCSC, A::SparseMatrixCSC)
     if C.colptr !== A.colptr
         resize!(C.colptr, length(A.colptr))
-        copy!(C.colptr, A.colptr)
+        memcopy!(C.colptr, A.colptr)
     end
     if C.rowval !== A.rowval
         resize!(C.rowval, length(A.rowval))
-        copy!(C.rowval, A.rowval)
+        memcopy!(C.rowval, A.rowval)
     end
 end
 

@@ -135,9 +135,9 @@ function diag(M::SymTridiagonal, n::Integer=0)
     # same vector type is returned independent of n
     absn = abs(n)
     if absn == 0
-        return copy!(similar(M.dv, length(M.dv)), M.dv)
+        return memcopy!(similar(M.dv, length(M.dv)), M.dv)
     elseif absn==1
-        return copy!(similar(M.ev, length(M.ev)), M.ev)
+        return memcopy!(similar(M.ev, length(M.ev)), M.ev)
     elseif absn <= size(M,1)
         return fill!(similar(M.dv, size(M,1)-absn), 0)
     else
@@ -511,7 +511,7 @@ similar(M::Tridiagonal, ::Type{T}) where {T} = Tridiagonal(similar(M.dl, T), sim
 similar(M::Tridiagonal, ::Type{T}, dims::Union{Dims{1},Dims{2}}) where {T} = spzeros(T, dims...)
 
 # Operations on Tridiagonal matrices
-copy!(dest::Tridiagonal, src::Tridiagonal) = (copy!(dest.dl, src.dl); copy!(dest.d, src.d); copy!(dest.du, src.du); dest)
+memcopy!(dest::Tridiagonal, src::Tridiagonal) = (memcopy!(dest.dl, src.dl); memcopy!(dest.d, src.d); memcopy!(dest.du, src.du); dest)
 
 #Elementary operations
 broadcast(::typeof(abs), M::Tridiagonal) = Tridiagonal(abs.(M.dl), abs.(M.d), abs.(M.du))
@@ -540,11 +540,11 @@ function diag(M::Tridiagonal{T}, n::Integer=0) where T
     # every branch call similar(..., ::Int) to make sure the
     # same vector type is returned independent of n
     if n == 0
-        return copy!(similar(M.d, length(M.d)), M.d)
+        return memcopy!(similar(M.d, length(M.d)), M.d)
     elseif n == -1
-        return copy!(similar(M.dl, length(M.dl)), M.dl)
+        return memcopy!(similar(M.dl, length(M.dl)), M.dl)
     elseif n == 1
-        return copy!(similar(M.du, length(M.du)), M.du)
+        return memcopy!(similar(M.du, length(M.du)), M.du)
     elseif abs(n) <= size(M,1)
         return fill!(similar(M.d, size(M,1)-abs(n)), 0)
     else

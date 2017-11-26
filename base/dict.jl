@@ -177,7 +177,7 @@ function grow_to!(dest::Associative{K,V}, itr, st) where V where K
             dest[k] = v
         else
             new = similar(dest, Pair{typejoin(K,typeof(k)), typejoin(V,typeof(v))})
-            copy!(new, dest)
+            foldl(push!, new, dest)
             new[k] = v
             return grow_to!(new, itr, st)
         end

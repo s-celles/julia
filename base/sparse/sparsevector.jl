@@ -63,7 +63,7 @@ end
 #
 # parent method for similar that preserves stored-entry structure (for when new and old dims match)
 _sparsesimilar(S::SparseVector, ::Type{TvNew}, ::Type{TiNew}) where {TvNew,TiNew} =
-    SparseVector(S.n, copy!(similar(S.nzind, TiNew), S.nzind), similar(S.nzval, TvNew))
+    SparseVector(S.n, memcopy!(similar(S.nzind, TiNew), S.nzind), similar(S.nzval, TvNew))
 # parent method for similar that preserves nothing (for when old and new dims differ, and new is 1d)
 _sparsesimilar(S::SparseVector, ::Type{TvNew}, ::Type{TiNew}, dims::Dims{1}) where {TvNew,TiNew} =
     SparseVector(dims..., similar(S.nzind, TiNew, 0), similar(S.nzval, TvNew, 0))
@@ -442,20 +442,20 @@ function prep_sparsevec_copy_dest!(A::SparseVector, lB, nnzB)
             # A will have more non-zero elements; unmodified elements are kept at the end.
             resize!(A.nzind, nnzB + nnzA - lastmodindA)
             resize!(A.nzval, nnzB + nnzA - lastmodindA)
-            copy!(A.nzind, nnzB+1, A.nzind, lastmodindA+1, nnzA-lastmodindA)
-            copy!(A.nzval, nnzB+1, A.nzval, lastmodindA+1, nnzA-lastmodindA)
+            memcopy!(A.nzind, nnzB+1, A.nzind, lastmodindA+1, nnzA-lastmodindA)
+            memcopy!(A.nzval, nnzB+1, A.nzval, lastmodindA+1, nnzA-lastmodindA)
         end
     end
 end
 
-function copy!(A::SparseVector, B::SparseVector)
+function memcopy!(A::SparseVector, B::SparseVector)
     prep_sparsevec_copy_dest!(A, length(B), nnz(B))
-    copy!(A.nzind, B.nzind)
-    copy!(A.nzval, B.nzval)
+    memcopy!(A.nzind, B.nzind)
+    memcopy!(A.nzval, B.nzval)
     return A
 end
 
-function copy!(A::SparseVector, B::SparseMatrixCSC)
+function memcopy!(A::SparseVector, B::SparseMatrixCSC)
     prep_sparsevec_copy_dest!(A, length(B), nnz(B))
 
     ptr = 1
@@ -468,12 +468,12 @@ function copy!(A::SparseVector, B::SparseMatrixCSC)
             ptr += 1
         end
     end
-    copy!(A.nzval, B.nzval)
+    memcopy!(A.nzval, B.nzval)
     return A
 end
 
-copy!(A::SparseMatrixCSC, B::SparseVector{TvB,TiB}) where {TvB,TiB} =
-    copy!(A, SparseMatrixCSC{TvB,TiB}(B.n, 1, TiB[1, length(B.nzind)+1], B.nzind, B.nzval))
+memcopy!(A::SparseMatrixCSC, B::SparseVector{TvB,TiB}) where {TvB,TiB} =
+    memcopy!(A, SparseMatrixCSC{TvB,TiB}(B.n, 1, TiB[1, length(B.nzind)+1], B.nzind, B.nzval))
 
 
 ### Rand Construction
@@ -927,8 +927,8 @@ function _absspvec_hcat(X::AbstractSparseVector{Tv,Ti}...) where {Tv,Ti}
         xnzind = nonzeroinds(xj)
         xnzval = nonzeros(xj)
         colptr[j] = roff
-        copy!(nzrow, roff, xnzind)
-        copy!(nzval, roff, xnzval)
+        memcopy!(nzrow, roff, xnzind)
+        memcopy!(nzval, roff, xnzval)
         roff += length(xnzind)
     end
     colptr[n+1] = roff
@@ -967,7 +967,7 @@ function _absspvec_vcat(X::AbstractSparseVector{Tv,Ti}...) where {Tv,Ti}
         for i = 1:xnnz
             rnzind[ir + i] = xnzind[i] + len
         end
-        copy!(rnzval, ir+1, xnzval)
+        memcopy!(rnzval, ir+1, xnzval)
         ir += xnnz
         len += length(xj)
     end
@@ -2003,7 +2003,7 @@ function _fillnonzero!(arr::SparseMatrixCSC{Tv, Ti}, val) where {Tv,Ti}
     resize!(arr.colptr, n+1)
     resize!(arr.rowval, m*n)
     resize!(arr.nzval, m*n)
-    copy!(arr.colptr, 1:m:n*m+1)
+    memcopy!(arr.colptr, 1:m:n*m+1)
     fill!(arr.nzval, val)
     index = 1
     @inbounds for _ in 1:n

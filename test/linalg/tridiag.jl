@@ -119,11 +119,11 @@ guardsrand(123) do
         @testset for mat_type in (Tridiagonal, SymTridiagonal)
             A = mat_type == Tridiagonal ? mat_type(dl, d, du) : mat_type(d, dl)
             fA = map(elty <: Complex ? Complex128 : Float64, Array(A))
-            @testset "similar, size, and copy!" begin
+            @testset "similar, size, and memcopy!" begin
                 B = similar(A)
                 @test size(B) == size(A)
                 if mat_type == Tridiagonal # doesn't work for SymTridiagonal yet
-                    copy!(B, A)
+                    memcopy!(B, A)
                     @test B == A
                 end
                 @test isa(similar(A), mat_type{elty})

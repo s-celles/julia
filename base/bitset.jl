@@ -18,9 +18,15 @@ BitSet(itr) = union!(BitSet(), itr)
 eltype(::Type{BitSet}) = Int
 similar(s::BitSet) = BitSet()
 copy(s1::BitSet) = copy!(BitSet(), s1)
+
+"""
+    copy!(dst, src)
+
+In-place [`copy`](@ref) of `src` into `dst`.
+"""
 function copy!(dest::BitSet, src::BitSet)
     resize!(dest.bits, length(src.bits))
-    copy!(dest.bits, src.bits)
+    memcopy!(dest.bits, src.bits)
     dest
 end
 eltype(s::BitSet) = Int

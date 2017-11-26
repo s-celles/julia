@@ -226,7 +226,7 @@ function *(A::StridedVecOrMat, Q::LQPackedQ)
         C = copy_oftype(A, TR)
     elseif size(A, 2) == size(Q.factors, 1)
         C = zeros(TR, size(A, 1), size(Q.factors, 2))
-        copy!(C, 1, A, 1, length(A))
+        memcopy!(C, 1, A, 1, length(A))
     else
         _rightappdimmismatch("columns")
     end

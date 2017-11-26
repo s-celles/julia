@@ -146,7 +146,7 @@ function A_mul_B!(rho2::StridedVector{T},Phi::CPM{T},rho::StridedVector{T}) wher
         As = view(Phi.kraus,:,s,:)
         rho1 += As*rho*As'
     end
-    return copy!(rho2,rho1)
+    return memcopy!(rho2,rho1)
 end
 
 let

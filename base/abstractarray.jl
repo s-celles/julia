@@ -568,7 +568,7 @@ similar(f, dims::DimOrInd...) = similar(f, dims)
 
 ## from general iterable to any array
 
-function copy!(dest::AbstractArray, src)
+function memcopy!(dest::AbstractArray, src)
     destiter = eachindex(dest)
     state = start(destiter)
     for x in src
@@ -578,7 +578,7 @@ function copy!(dest::AbstractArray, src)
     return dest
 end
 
-function copy!(dest::AbstractArray, dstart::Integer, src)
+function memcopy!(dest::AbstractArray, dstart::Integer, src)
     i = Int(dstart)
     for x in src
         dest[i] = x
@@ -588,7 +588,7 @@ function copy!(dest::AbstractArray, dstart::Integer, src)
 end
 
 # copy from an some iterable object into an AbstractArray
-function copy!(dest::AbstractArray, dstart::Integer, src, sstart::Integer)
+function memcopy!(dest::AbstractArray, dstart::Integer, src, sstart::Integer)
     if (sstart < 1)
         throw(ArgumentError(string("source start offset (",sstart,") is < 1")))
     end
@@ -616,7 +616,7 @@ function copy!(dest::AbstractArray, dstart::Integer, src, sstart::Integer)
 end
 
 # this method must be separate from the above since src might not have a length
-function copy!(dest::AbstractArray, dstart::Integer, src, sstart::Integer, n::Integer)
+function memcopy!(dest::AbstractArray, dstart::Integer, src, sstart::Integer, n::Integer)
     n < 0 && throw(ArgumentError(string("tried to copy n=", n, " elements, but n should be nonnegative")))
     n == 0 && return dest
     dmax = dstart + n - 1
@@ -646,10 +646,10 @@ end
 ## copy between abstract arrays - generally more efficient
 ## since a single index variable can be used.
 
-copy!(dest::AbstractArray, src::AbstractArray) =
-    copy!(IndexStyle(dest), dest, IndexStyle(src), src)
+memcopy!(dest::AbstractArray, src::AbstractArray) =
+    memcopy!(IndexStyle(dest), dest, IndexStyle(src), src)
 
-function copy!(::IndexStyle, dest::AbstractArray, ::IndexStyle, src::AbstractArray)
+function memcopy!(::IndexStyle, dest::AbstractArray, ::IndexStyle, src::AbstractArray)
     destinds, srcinds = linearindices(dest), linearindices(src)
     isempty(srcinds) || (first(srcinds) ∈ destinds && last(srcinds) ∈ destinds) ||
         throw(BoundsError(dest, srcinds))
@@ -659,7 +659,7 @@ function copy!(::IndexStyle, dest::AbstractArray, ::IndexStyle, src::AbstractArr
     return dest
 end
 
-function copy!(::IndexStyle, dest::AbstractArray, ::IndexCartesian, src::AbstractArray)
+function memcopy!(::IndexStyle, dest::AbstractArray, ::IndexCartesian, src::AbstractArray)
     destinds, srcinds = linearindices(dest), linearindices(src)
     isempty(srcinds) || (first(srcinds) ∈ destinds && last(srcinds) ∈ destinds) ||
         throw(BoundsError(dest, srcinds))
@@ -670,19 +670,19 @@ function copy!(::IndexStyle, dest::AbstractArray, ::IndexCartesian, src::Abstrac
     return dest
 end
 
-function copy!(dest::AbstractArray, dstart::Integer, src::AbstractArray)
-    copy!(dest, dstart, src, first(linearindices(src)), _length(src))
+function memcopy!(dest::AbstractArray, dstart::Integer, src::AbstractArray)
+    memcopy!(dest, dstart, src, first(linearindices(src)), _length(src))
 end
 
-function copy!(dest::AbstractArray, dstart::Integer, src::AbstractArray, sstart::Integer)
+function memcopy!(dest::AbstractArray, dstart::Integer, src::AbstractArray, sstart::Integer)
     srcinds = linearindices(src)
     sstart ∈ srcinds || throw(BoundsError(src, sstart))
-    copy!(dest, dstart, src, sstart, last(srcinds)-sstart+1)
+    memcopy!(dest, dstart, src, sstart, last(srcinds)-sstart+1)
 end
 
-function copy!(dest::AbstractArray, dstart::Integer,
-               src::AbstractArray, sstart::Integer,
-               n::Integer)
+function memcopy!(dest::AbstractArray, dstart::Integer,
+                  src::AbstractArray, sstart::Integer,
+                  n::Integer)
     n == 0 && return dest
     n < 0 && throw(ArgumentError(string("tried to copy n=", n, " elements, but n should be nonnegative")))
     destinds, srcinds = linearindices(dest), linearindices(src)
@@ -699,8 +699,8 @@ function copy(a::AbstractArray)
     copymutable(a)
 end
 
-function copy!(B::AbstractVecOrMat{R}, ir_dest::AbstractRange{Int}, jr_dest::AbstractRange{Int},
-               A::AbstractVecOrMat{S}, ir_src::AbstractRange{Int}, jr_src::AbstractRange{Int}) where {R,S}
+function memcopy!(B::AbstractVecOrMat{R}, ir_dest::AbstractRange{Int}, jr_dest::AbstractRange{Int},
+                  A::AbstractVecOrMat{S}, ir_src::AbstractRange{Int}, jr_src::AbstractRange{Int}) where {R,S}
     if length(ir_dest) != length(ir_src)
         throw(ArgumentError(string("source and destination must have same size (got ",
                                    length(ir_src)," and ",length(ir_dest),")")))
@@ -746,7 +746,7 @@ julia> Base.copymutable(tup)
 """
 function copymutable(a::AbstractArray)
     @_propagate_inbounds_meta
-    copy!(similar(a), a)
+    memcopy!(similar(a), a)
 end
 copymutable(itr) = collect(itr)
 
@@ -841,7 +841,7 @@ keys(s::IndexStyle, A::AbstractArray, B::AbstractArray...) = eachindex(s, A, B..
 ## Conversions ##
 
 convert(::Type{AbstractArray{T,N}}, A::AbstractArray{T,N}) where {T,N  } = A
-convert(::Type{AbstractArray{T,N}}, A::AbstractArray{S,N}) where {T,S,N} = copy!(similar(A,T), A)
+convert(::Type{AbstractArray{T,N}}, A::AbstractArray{S,N}) where {T,S,N} = memcopy!(similar(A,T), A)
 convert(::Type{AbstractArray{T}},   A::AbstractArray{S,N}) where {T,S,N} = convert(AbstractArray{T,N}, A)
 
 convert(::Type{Array}, A::AbstractArray{T,N}) where {T,N} = convert(Array{T,N}, A)
@@ -1136,7 +1136,7 @@ function typed_hcat(::Type{T}, A::AbstractVecOrMat...) where T
         for k=1:nargs
             Ak = A[k]
             n = length(Ak)
-            copy!(B, pos, Ak, 1, n)
+            memcopy!(B, pos, Ak, 1, n)
             pos += n
         end
     else
@@ -1234,7 +1234,7 @@ end
 function _cat(A, shape::NTuple{N}, catdims, X...) where N
     offsets = zeros(Int, N)
     inds = Vector{UnitRange{Int}}(uninitialized, N)
-    concat = copy!(zeros(Bool, N), catdims)
+    concat = memcopy!(zeros(Bool, N), catdims)
     for x in X
         for i = 1:N
             if concat[i]

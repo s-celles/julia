@@ -446,8 +446,8 @@ function test_primitives(::Type{T}, shape, ::Type{TestAbstractArray}) where T
     # reshape(a::AbstractArray, dims::Dims)
     @test_throws DimensionMismatch reshape(B, (0, 1))
 
-    # copy!(dest::AbstractArray, src::AbstractArray)
-    @test_throws BoundsError copy!(Vector{Int}(uninitialized, 10), [1:11...])
+    # memcopy!(dest::AbstractArray, src::AbstractArray)
+    @test_throws BoundsError memcopy!(Vector{Int}(uninitialized, 10), [1:11...])
 
     # convert{T, N}(::Type{Array}, A::AbstractArray{T, N})
     X = [1:10...]
@@ -869,7 +869,7 @@ end
 @testset "ImageCore #40" begin
     Base.convert(::Type{Array{T,n}}, a::Array{T,n}) where {T<:Number,n} = a
     Base.convert(::Type{Array{T,n}}, a::Array) where {T<:Number,n} =
-        copy!(Array{T,n}(uninitialized, size(a)), a)
+        memcopy!(Array{T,n}(uninitialized, size(a)), a)
     @test isa(similar(Dict(:a=>1, :b=>2.0), Pair{Union{},Union{}}), Dict{Union{}, Union{}})
 end
 

@@ -99,7 +99,7 @@ function vect(X...)
     T = promote_typeof(X...)
     #T[ X[i] for i=1:length(X) ]
     # TODO: this is currently much faster. should figure out why. not clear.
-    return copy!(Vector{T}(uninitialized, length(X)), X)
+    return memcopy!(Vector{T}(uninitialized, length(X)), X)
 end
 
 size(a::Array, d) = arraysize(a, d)
@@ -193,12 +193,12 @@ function unsafe_copy!(dest::Array{T}, doffs, src::Array{T}, soffs, n) where T
 end
 
 """
-    copy!(dest, do, src, so, N)
+    memcopy!(dest, do, src, so, N)
 
 Copy `N` elements from collection `src` starting at offset `so`, to array `dest` starting at
 offset `do`. Return `dest`.
 """
-function copy!(dest::Array{T}, doffs::Integer, src::Array{T}, soffs::Integer, n::Integer) where T
+function memcopy!(dest::Array{T}, doffs::Integer, src::Array{T}, soffs::Integer, n::Integer) where T
     n == 0 && return dest
     n > 0 || throw(ArgumentError(string("tried to copy n=", n, " elements, but n should be nonnegative")))
     if soffs < 1 || doffs < 1 || soffs+n-1 > length(src) || doffs+n-1 > length(dest)
@@ -207,7 +207,7 @@ function copy!(dest::Array{T}, doffs::Integer, src::Array{T}, soffs::Integer, n:
     unsafe_copy!(dest, doffs, src, soffs, n)
 end
 
-copy!(dest::Array{T}, src::Array{T}) where {T} = copy!(dest, 1, src, 1, length(src))
+memcopy!(dest::Array{T}, src::Array{T}) where {T} = memcopy!(dest, 1, src, 1, length(src))
 
 """
     copy(x)
@@ -448,7 +448,7 @@ convert(::Type{Array{T}}, x::Array{T,n}) where {T,n} = x
 convert(::Type{Array{T,n}}, x::Array{T,n}) where {T,n} = x
 
 convert(::Type{Array{T}}, x::AbstractArray{S,n}) where {T,n,S} = convert(Array{T,n}, x)
-convert(::Type{Array{T,n}}, x::AbstractArray{S,n}) where {T,n,S} = copy!(Array{T,n}(size(x)), x)
+convert(::Type{Array{T,n}}, x::AbstractArray{S,n}) where {T,n,S} = memcopy!(Array{T,n}(size(x)), x)
 
 promote_rule(a::Type{Array{T,n}}, b::Type{Array{S,n}}) where {T,n,S} = el_same(promote_type(T,S), a, b)
 
@@ -477,8 +477,8 @@ julia> collect(Float64, 1:2:5)
 """
 collect(::Type{T}, itr) where {T} = _collect(T, itr, iteratorsize(itr))
 
-_collect(::Type{T}, itr, isz::HasLength) where {T} = copy!(Vector{T}(uninitialized, Int(length(itr)::Integer)), itr)
-_collect(::Type{T}, itr, isz::HasShape) where {T}  = copy!(similar(Array{T}, indices(itr)), itr)
+_collect(::Type{T}, itr, isz::HasLength) where {T} = memcopy!(Vector{T}(uninitialized, Int(length(itr)::Integer)), itr)
+_collect(::Type{T}, itr, isz::HasShape) where {T}  = memcopy!(similar(Array{T}, indices(itr)), itr)
 function _collect(::Type{T}, itr, isz::SizeUnknown) where T
     a = Vector{T}()
     for x in itr
@@ -520,7 +520,7 @@ collect(A::AbstractArray) = _collect_indices(indices(A), A)
 collect_similar(cont, itr) = _collect(cont, itr, iteratoreltype(itr), iteratorsize(itr))
 
 _collect(cont, itr, ::HasEltype, isz::Union{HasLength,HasShape}) =
-    copy!(_similar_for(cont, eltype(itr), itr, isz), itr)
+    memcopy!(_similar_for(cont, eltype(itr), itr, isz), itr)
 
 function _collect(cont, itr, ::HasEltype, isz::SizeUnknown)
     a = _similar_for(cont, eltype(itr), itr, isz)
@@ -530,12 +530,12 @@ function _collect(cont, itr, ::HasEltype, isz::SizeUnknown)
     return a
 end
 
-_collect_indices(::Tuple{}, A) = copy!(Array{eltype(A),0}(uninitialized), A)
+_collect_indices(::Tuple{}, A) = memcopy!(Array{eltype(A),0}(uninitialized), A)
 _collect_indices(indsA::Tuple{Vararg{OneTo}}, A) =
-    copy!(Array{eltype(A)}(uninitialized, length.(indsA)), A)
+    memcopy!(Array{eltype(A)}(uninitialized, length.(indsA)), A)
 function _collect_indices(indsA, A)
     B = Array{eltype(A)}(uninitialized, length.(indsA))
-    copy!(B, CartesianRange(indices(B)), A, CartesianRange(indsA))
+    memcopy!(B, CartesianRange(indices(B)), A, CartesianRange(indsA))
 end
 
 # define this as a macro so that the call to Inference
@@ -608,7 +608,7 @@ function collect_to!(dest::AbstractArray{T}, itr, offs, st) where T
         else
             R = typejoin(T, S)
             new = similar(dest, R)
-            copy!(new,1, dest,1, i-1)
+            memcopy!(new,1, dest,1, i-1)
             @inbounds new[i] = el
             return collect_to!(new, itr, i+1, st)
         end
@@ -630,7 +630,7 @@ function grow_to!(dest, itr, st)
             push!(dest, el::T)
         else
             new = similar(dest, typejoin(T, S))
-            copy!(new, dest)
+            memcopy!(new, dest)
             push!(new, el)
             return grow_to!(new, itr, st)
         end
@@ -846,7 +846,7 @@ function append!(a::Array{<:Any,1}, items::AbstractVector)
     itemindices = eachindex(items)
     n = length(itemindices)
     _growend!(a, n)
-    copy!(a, length(a)-n+1, items, first(itemindices), n)
+    memcopy!(a, length(a)-n+1, items, first(itemindices), n)
     return a
 end
 
@@ -890,9 +890,9 @@ function prepend!(a::Array{<:Any,1}, items::AbstractVector)
     n = length(itemindices)
     _growbeg!(a, n)
     if a === items
-        copy!(a, 1, items, n+1, n)
+        memcopy!(a, 1, items, n+1, n)
     else
-        copy!(a, 1, items, first(itemindices), n)
+        memcopy!(a, 1, items, first(itemindices), n)
     end
     return a
 end
@@ -1760,7 +1760,7 @@ function find(testf::Function, A)
         end
     end
     I = Vector{Int}(uninitialized, length(tmpI))
-    copy!(I, tmpI)
+    memcopy!(I, tmpI)
     return I
 end
 _index_remapper(A::AbstractArray) = linearindices(A)

@@ -176,20 +176,20 @@ true
 function lufact(A::AbstractMatrix{T}, pivot::Union{Val{false}, Val{true}}) where T
     S = typeof(zero(T)/one(T))
     AA = similar(A, S)
-    copy!(AA, A)
+    memcopy!(AA, A)
     lufact!(AA, pivot)
 end
 # We can't assume an ordered field so we first try without pivoting
 function lufact(A::AbstractMatrix{T}) where T
     S = typeof(zero(T)/one(T))
     AA = similar(A, S)
-    copy!(AA, A)
+    memcopy!(AA, A)
     F = lufact!(AA, Val(false))
     if issuccess(F)
         return F
     else
         AA = similar(A, S)
-        copy!(AA, A)
+        memcopy!(AA, A)
         return lufact!(AA, Val(true))
     end
 end

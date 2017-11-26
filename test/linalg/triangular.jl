@@ -42,9 +42,9 @@ for elty1 in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloa
         @test isa(similar(A1, (3,2)), Matrix{elty1})
         @test isa(similar(A1, Int, (3,2)), Matrix{Int})
 
-        #copy!
+        #memcopy!
         simA1 = similar(A1)
-        copy!(simA1, A1)
+        memcopy!(simA1, A1)
         @test simA1 == A1
 
         # getindex
@@ -155,23 +155,23 @@ for elty1 in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloa
         # Unary operations
         @test -A1 == -Matrix(A1)
 
-        # copy and copy! (test views as well, see issue #14317)
+        # copy and memcopy! (test views as well, see issue #14317)
         let vrange = 1:n-1, viewA1 = t1(view(A1.data, vrange, vrange))
             # copy
             @test copy(A1) == copy(Matrix(A1))
             @test copy(viewA1) == copy(Matrix(viewA1))
-            # copy!
+            # memcopy!
             B = similar(A1)
-            copy!(B, A1)
+            memcopy!(B, A1)
             @test B == A1
             B = similar(A1.')
-            copy!(B, A1.')
+            memcopy!(B, A1.')
             @test B == A1.'
             B = similar(viewA1)
-            copy!(B, viewA1)
+            memcopy!(B, viewA1)
             @test B == viewA1
             B = similar(viewA1.')
-            copy!(B, viewA1.')
+            memcopy!(B, viewA1.')
             @test B == viewA1.'
         end
 

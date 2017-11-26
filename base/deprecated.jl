@@ -2132,6 +2132,9 @@ finalizer(f::Ptr{Void}, o::Function) = invoke(finalizer, Tuple{Ptr{Void}, Any}, 
     Base.@deprecate_binding broadcast_t broadcast false ", broadcast_t(f, ::Type{ElType}, shape, iter, As...)` should become `broadcast(f, Broadcast.DefaultArrayStyle{N}(), ElType, shape, As...))` (see the manual chapter Interfaces)"
 end
 
+@deprecate copy!(dest::AbstractSet, src) union!(dest, src)
+@deprecate copy!(dest::Associative, src) foldl(push!, dest, src)
+@deprecate copy!(dest::Union{AbstractArray,IndexStyle}, args...) memcopy!(dest, args...)
 
 # END 0.7 deprecations
 
