@@ -77,11 +77,10 @@ end
 @inline genperm(I, perm::AbstractVector{Int}) = genperm(I, (perm...,))
 
 """
-    permutedims(A, perm)
+    permutedims(A::AbstractArray, perm)
 
 Permute the dimensions of array `A`. `perm` is a vector specifying a permutation of length
-`ndims(A)`. This is a generalization of transpose for multi-dimensional arrays. Transpose is
-equivalent to `permutedims(A, [2,1])`.
+`ndims(A)`.
 
 See also: [`PermutedDimsArray`](@ref).
 
@@ -108,10 +107,25 @@ julia> permutedims(A, [3, 2, 1])
  6  8
 ```
 """
-function Base.permutedims(A::AbstractArray, perm)
+function permutedims(A::AbstractArray, perm)
     dest = similar(A, genperm(indices(A), perm))
     permutedims!(dest, A, perm)
 end
+
+"""
+    permutedims(m::AbstractMatrix)
+
+Permute the dimensions of the matrix `m`, by flipping the elements across the diagonal of
+the matrix. Differs from [`transpose`](@ref) in that the operation is not recursive.
+"""
+permutedims(A::AbstractMatrix) = permutedims(A, (2,1))
+
+"""
+    permutedims(v::AbstractVector)
+
+Reshape vector `v` into a `1 × length(v)` row matrix.
+"""
+permutedims(v::AbstractVector) = reshape(v, (1, length(v)))
 
 """
     permutedims!(dest, src, perm)
