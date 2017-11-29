@@ -1909,6 +1909,11 @@ function abstract_call_gf_by_type(@nospecialize(f), @nospecialize(atype), sv::In
     return rettype
 end
 
+function method_for_inference_heuristics(infstate::InferenceState)
+    m = infstate.src.method_for_inference_heuristics
+    return m === nothing ? infstate.linfo.def : m
+end
+
 function abstract_call_method(method::Method, @nospecialize(f), @nospecialize(sig), sparams::SimpleVector, sv::InferenceState)
     topmost = nothing
     # Limit argument type tuple growth of functions:
@@ -1919,13 +1924,14 @@ function abstract_call_method(method::Method, @nospecialize(f), @nospecialize(si
     infstate = sv
     while !(infstate === nothing)
         infstate = infstate::InferenceState
-        if method === infstate.linfo.def
-            if infstate.linfo.specTypes == sig
-                # avoid widening when detecting self-recursion
-                # TODO: merge call cycle and return right away
-                topmost = nothing
-                break
-            end
+        if method === infstate.linfo.def && infstate.linfo.specTypes == sig
+            # avoid widening when detecting self-recursion
+            # TODO: merge call cycle and return right away
+            topmost = nothing
+            break
+        end
+        working_method = method_for_inference_heuristics(infstate)
+        if method === working_method
             if topmost === nothing
                 # inspect the parent of this edge,
                 # to see if they are the same Method as sv
@@ -1943,7 +1949,8 @@ function abstract_call_method(method::Method, @nospecialize(f), @nospecialize(si
                     # then check the parent link
                     if topmost === nothing && parent !== nothing
                         parent = parent::InferenceState
-                        if parent.cached && parent.linfo.def === sv.linfo.def
+                        parent_method = method_for_inference_heuristics(parent)
+                        if parent.cached && parent_method === working_method
                             topmost = infstate
                         end
                     end
@@ -3220,6 +3227,7 @@ function typeinf_code(linfo::MethodInstance, optimize::Bool, cached::Bool,
                     tree.slotflags = UInt8[ 0 for i = 1:method.nargs ]
                     tree.slottypes = nothing
                     tree.ssavaluetypes = 0
+                    tree.method_for_inference_heuristics = nothing
                     tree.inferred = true
                     tree.pure = true
                     tree.inlineable = true
