@@ -686,6 +686,9 @@ Deprecated or removed
   * `cumsum`, `cumprod`, `accumulate`, and their mutating versions now require a `dim`
     argument instead of defaulting to using the first dimension ([#24684]).
 
+  * `copy!` is deprecated for `AbstractSet` and `Associative`, with the intention to re-enable
+    it with a cleaner meaning in a future version ([#24844]).
+
 Command-line option changes
 ---------------------------
 

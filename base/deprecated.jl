@@ -2150,6 +2150,9 @@ end
 
 @deprecate merge!(repo::LibGit2.GitRepo, args...; kwargs...) LibGit2.merge!(repo, args...; kwargs...)
 
+@deprecate copy!(dest::AbstractSet, src) union!(dest, src)
+@deprecate copy!(dest::Associative, src) foldl(push!, dest, src)
+
 # END 0.7 deprecations
 
 # BEGIN 1.0 deprecations
