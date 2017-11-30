@@ -1,5 +1,7 @@
 # This file is a part of Julia. License is MIT: https://julialang.org/license
 
+Base.Random.Sampler(rng::AbstractRNG, str::AbstractString, ::Val{1}) =
+    Base.Random.SamplerSimple(str, Base.Random.Sampler(rng, 1:Base.Random._endof(str), Val(Inf)))
 
 
 # Issue #6573
