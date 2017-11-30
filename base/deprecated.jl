@@ -2136,7 +2136,6 @@ end
 @deprecate RowVector{T}(n::Tuple{Int,Int}) where {T}    RowVector{T}(uninitialized, n)
 
 @deprecate cumsum(A::AbstractArray)     cumsum(A, 1)
-@deprecate cumsum_kbn(A::AbstractArray) cumsum_kbn(A, 1)
 @deprecate cumprod(A::AbstractArray)    cumprod(A, 1)
 
 # issue #16307
@@ -2171,6 +2170,10 @@ end
 @deprecate logspace(start, stop)     logspace(start, stop, 50)
 
 @deprecate merge!(repo::LibGit2.GitRepo, args...; kwargs...) LibGit2.merge!(repo, args...; kwargs...)
+
+# issue #24804
+@deprecate_moved sum_kbn "KahanSummation"
+@deprecate_moved cumsum_kbn "KahanSummation"
 
 # END 0.7 deprecations
 
