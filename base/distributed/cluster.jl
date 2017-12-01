@@ -1123,7 +1123,8 @@ function init_parallel()
     global PGRP
     global LPROC
     LPROC.id = 1
-    cluster_cookie(randstring(HDR_COOKIE_LEN))
+    # FIXME: replace back by randstring(HDR_COOKIE_LEN)
+    cluster_cookie("c03rgKi1joVnWq9l")
     assert(isempty(PGRP.workers))
     register_worker(LPROC)
 end

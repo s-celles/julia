@@ -349,12 +349,6 @@ include("irrationals.jl")
 include("mathconstants.jl")
 using .MathConstants: ℯ, π, pi
 
-# random number generation
-include("random/dSFMT.jl")
-include("random/random.jl")
-using .Random
-import .Random: rand, rand!
-
 # (s)printf macros
 include("printf.jl")
 using .Printf
@@ -404,6 +398,18 @@ include("libgit2/libgit2.jl")
 
 # package manager
 include("pkg/pkg.jl")
+
+# The following is used in sparse code
+abstract type AbstractRNG end
+function defaultRNG end
+function randn end
+function randsubseq end
+function randsubseq! end
+
+# we want rand & rand! available by default in Base
+function rand end
+function rand! end
+function srand end
 
 # sparse matrices, vectors, and sparse linear algebra
 include("sparse/sparse.jl")
@@ -478,6 +484,7 @@ Base.require(:FileWatching)
 Base.require(:IterativeEigenSolvers)
 Base.require(:Mmap)
 Base.require(:Profile)
+Base.require(:Random)
 Base.require(:SharedArrays)
 Base.require(:SuiteSparse)
 Base.require(:Test)
@@ -487,6 +494,7 @@ Base.require(:Test)
     @deprecate_binding Mmap root_module(:Mmap) true ", run `using Mmap` instead"
     @deprecate_binding Profile root_module(:Profile) true ", run `using Profile` instead"
     @deprecate_binding Dates root_module(:Dates) true ", run `using Dates` instead"
+    @deprecate_binding Random root_module(:Random) true ", run `using Random` instead"
 end
 
 empty!(LOAD_PATH)

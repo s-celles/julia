@@ -2,9 +2,12 @@
 
 module Random
 
-using Base.dSFMT
+include("dSFMT.jl")
+
+using .dSFMT
 using Base.GMP: Limb, MPZ
-import Base: copymutable, copy, copy!, ==, hash
+import Base: rand, rand!, srand, defaultRNG, randn, randsubseq, randsubseq!,
+             copymutable, copy, copy!, ==, hash, serialize, deserialize
 
 export srand,
        rand, rand!,
@@ -17,12 +20,11 @@ export srand,
        randperm, randperm!,
        randcycle, randcycle!,
        AbstractRNG, MersenneTwister, RandomDevice,
-       GLOBAL_RNG, randjump
+       GLOBAL_RNG, defaultRNG, randjump
 
+defaultRNG() = GLOBAL_RNG
 
 ## general definitions
-
-abstract type AbstractRNG end
 
 ### floats
 
@@ -270,5 +272,14 @@ true
 ```
 """
 srand(rng::AbstractRNG, ::Void) = srand(rng)
+
+
+## deprecations
+
+# PR #21359
+
+@deprecate srand(r::MersenneTwister, filename::AbstractString, n::Integer=4) srand(r, read!(filename, Vector{UInt32}(uninitialized, Int(n))))
+@deprecate srand(filename::AbstractString, n::Integer=4) srand(read!(filename, Vector{UInt32}(uninitialized, Int(n))))
+@deprecate MersenneTwister(filename::AbstractString)  srand(MersenneTwister(0), read!(filename, Vector{UInt32}(uninitialized, Int(4))))
 
 end # module

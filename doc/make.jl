@@ -31,6 +31,7 @@ if Sys.iswindows()
     cp_q("../stdlib/CRC32c/docs/src/index.md",                "src/stdlib/crc32c.md")
     cp_q("../stdlib/Dates/docs/src/index.md",                 "src/stdlib/dates.md")
     cp_q("../stdlib/IterativeEigenSolvers/docs/src/index.md", "src/stdlib/iterativeeigensolvers.md")
+    cp_q("../stdlib/Random/docs/src/index.md",                "src/stdlib/random.md")
 else
     symlink_q("../../../stdlib/DelimitedFiles/docs/src/index.md",        "src/stdlib/delimitedfiles.md")
     symlink_q("../../../stdlib/Test/docs/src/index.md",                  "src/stdlib/test.md")
@@ -42,6 +43,7 @@ else
     symlink_q("../../../stdlib/CRC32c/docs/src/index.md",                "src/stdlib/crc32c.md")
     symlink_q("../../../stdlib/Dates/docs/src/index.md",                 "src/stdlib/dates.md")
     symlink_q("../../../stdlib/IterativeEigenSolvers/docs/src/index.md", "src/stdlib/iterativeeigensolvers.md")
+    symlink_q("../../../stdlib/Random/docs/src/index.md",                "src/stdlib/random.md")
 end
 
 const PAGES = [
@@ -117,6 +119,7 @@ const PAGES = [
         "stdlib/filewatching.md",
         "stdlib/crc32c.md",
         "stdlib/iterativeeigensolvers.md",
+        "stdlib/random.md",
     ],
     "Developer Documentation" => [
         "devdocs/reflection.md",
@@ -152,7 +155,7 @@ const PAGES = [
 ]
 
 using DelimitedFiles, Test, Mmap, SharedArrays, Profile, Base64, FileWatching, CRC32c,
-      Dates, IterativeEigenSolvers
+      Dates, IterativeEigenSolvers, Random
 
 makedocs(
     build     = joinpath(pwd(), "_build/html/en"),
