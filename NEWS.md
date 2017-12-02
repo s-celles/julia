@@ -702,6 +702,10 @@ Deprecated or removed
   * `cumsum`, `cumprod`, `accumulate`, and their mutating versions now require a `dim`
     argument instead of defaulting to using the first dimension ([#24684]).
 
+  * `search` and `rsearch` have been deprecated in favor of `findfirst`/`findnext` and
+    `findlast`/`findprev` respectively, in combination with the new `equalto` and `occursin`
+    predicates for some methods ([#24673]).
+
 Command-line option changes
 ---------------------------
 
@@ -1666,3 +1670,4 @@ Command-line option changes
 [#24320]: https://github.com/JuliaLang/julia/issues/24320
 [#24396]: https://github.com/JuliaLang/julia/issues/24396
 [#24413]: https://github.com/JuliaLang/julia/issues/24413
+[#24684]: https://github.com/JuliaLang/julia/issues/24684
