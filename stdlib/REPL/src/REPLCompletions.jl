@@ -646,9 +646,11 @@ function CC.abstract_eval_globalref(interp::REPLInterpreter, g::GlobalRef, baile
                                     sv::CC.InferenceState)
     if (interp.limit_aggressive_inference ? is_repl_frame(sv) : is_call_graph_uncached(sv))
         if isdefined_globalref(g)
-            return CC.RTEffects(Const(ccall(:jl_get_globalref_value, Any, (Any,), g)), Union{}, CC.EFFECTS_TOTAL)
+            return Pair{CC.RTEffects, Union{Nothing, Core.BindingPartition}}(
+                CC.RTEffects(Const(ccall(:jl_get_globalref_value, Any, (Any,), g)), Union{}, CC.EFFECTS_TOTAL), nothing)
         end
-        return CC.RTEffects(Union{}, UndefVarError, CC.EFFECTS_THROWS)
+        return Pair{CC.RTEffects, Union{Nothing, Core.BindingPartition}}(
+            CC.RTEffects(Union{}, UndefVarError, CC.EFFECTS_THROWS), nothing)
     end
     return @invoke CC.abstract_eval_globalref(interp::CC.AbstractInterpreter, g::GlobalRef, bailed::Bool,
                                               sv::CC.InferenceState)
@@ -714,7 +716,7 @@ function CC.const_prop_argument_heuristic(interp::REPLInterpreter, arginfo::CC.A
 end
 
 function resolve_toplevel_symbols!(src::Core.CodeInfo, mod::Module)
-    @ccall jl_resolve_globals_in_ir(
+    @ccall jl_resolve_definition_effects_in_ir(
         #=jl_array_t *stmts=# src.code::Any,
         #=jl_module_t *m=# mod::Any,
         #=jl_svec_t *sparam_vals=# Core.svec()::Any,
